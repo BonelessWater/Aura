@@ -30,7 +30,7 @@ export const IntakeLayout = ({ step, doctorImage, greeting, tip, children }: Int
               className="relative w-[340px] ml-4 mb-4"
             >
               <div className="bg-[#111420]/90 backdrop-blur-md border border-[#7B61FF]/20 rounded-2xl rounded-bl-sm px-6 py-5 shadow-2xl shadow-[#7B61FF]/10">
-                <p className="text-lg font-bold text-[#2563EB] mb-1.5 tracking-wide">{greeting}</p>
+                <p className="text-lg font-bold text-[#00B4D8] mb-1.5 tracking-wide">{greeting}</p>
                 <p className="text-[13px] text-[#9BA3C0] leading-[1.75]">{tip}</p>
               </div>
               {/* Tail */}
@@ -65,7 +65,7 @@ export const IntakeLayout = ({ step, doctorImage, greeting, tip, children }: Int
             <div className="flex items-center justify-center gap-0 mb-10 relative max-w-xs mx-auto">
               <div className="absolute top-1/2 left-6 right-6 h-px bg-[#1E2235] -translate-y-1/2" />
               <motion.div
-                className="absolute top-1/2 left-6 h-px bg-gradient-to-r from-[#7B61FF] to-[#2563EB] -translate-y-1/2 origin-left"
+                className="absolute top-1/2 left-6 h-px bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] -translate-y-1/2 origin-left"
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: (step - 1) / 2 }}
                 style={{ width: 'calc(100% - 3rem)' }}
@@ -77,7 +77,7 @@ export const IntakeLayout = ({ step, doctorImage, greeting, tip, children }: Int
                     className={clsx(
                       "w-9 h-9 rounded-full flex items-center justify-center border-2 text-sm font-semibold transition-colors duration-300",
                       step === s ? "border-[#7B61FF] bg-[#7B61FF] text-white shadow-lg shadow-[#7B61FF]/30" :
-                      step > s ? "border-[#2563EB] bg-[#2563EB] text-[#0A0D14]" :
+                      step > s ? "border-[#3ECFCF] bg-[#3ECFCF] text-[#0A0D14]" :
                       "border-[#2A2E3B] bg-[#0E1118] text-[#8A93B2]"
                     )}
                     layout
@@ -100,7 +100,7 @@ export const IntakeLayout = ({ step, doctorImage, greeting, tip, children }: Int
                 >
                   <img src={doctorImage} alt="" className="w-14 h-14 object-contain shrink-0" />
                   <div>
-                    <p className="text-sm font-bold text-[#2563EB] mb-1">{greeting}</p>
+                    <p className="text-sm font-bold text-[#00B4D8] mb-1">{greeting}</p>
                     <p className="text-[13px] text-[#9BA3C0] leading-relaxed">{tip}</p>
                   </div>
                 </motion.div>

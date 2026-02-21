@@ -35,28 +35,22 @@ export const SOAPNote = ({ isOpen, onClose }: SOAPNoteProps) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+          animate={{ opacity: 1, backdropFilter: 'blur(12px)' }}
+          exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/40"
           onClick={onClose}
         >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-
+          {/* Main Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.97, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 16 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, scale: 0.9, y: 30, rotateX: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20, transition: { duration: 0.2, ease: 'easeIn' } }}
+            transition={{ type: "spring", damping: 25, stiffness: 300, mass: 0.5 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl"
-            style={{
-              background: 'rgba(13, 16, 24, 0.97)',
-              backdropFilter: 'blur(32px)',
-              border: '1px solid rgba(138,147,178,0.12)',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
-            }}
+            className="w-full max-w-4xl max-h-[90vh] bg-[#0A0D14] border border-[#2A2E3B] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            style={{ boxShadow: '0 30px 60px -12px rgba(244, 162, 97, 0.15)' }}
           >
             {/* Subtle top line */}
             <div className="h-[1px] bg-gradient-to-r from-transparent via-[#8A93B2]/20 to-transparent" />

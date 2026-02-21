@@ -19,7 +19,7 @@ const STEP_IMAGES: Record<number, string> = {
 const NARRATION: Record<number, { greeting: string; tip: React.ReactNode }> = {
   1: {
     greeting: "Let's find your pattern!",
-    tip: <>Upload <b className="text-white">bloodwork PDFs</b>, <b className="text-white">lab panels</b>, or <b className="text-white">doctor's notes</b>. The more <b className="text-white">years of data</b>, the clearer the pattern — even <b className="text-white">2–3 reports</b> help!</>,
+    tip: <>Upload <b className="text-white">bloodwork PDFs</b>, <b className="text-white">lab panels</b>, or <b className="text-white">doctor's notes</b>. The more <b className="text-white">years of data</b>, the clearer the pattern â€” even <b className="text-white">2â€“3 reports</b> help!</>,
   },
   2: {
     greeting: "Now tell me how you feel.",

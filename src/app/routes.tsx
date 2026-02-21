@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./Layout";
 import { Home } from "./views/Home";
+import { ResultsDashboard } from "./components/results/ResultsDashboard";
 import { Vault } from "./views/Vault";
 import { ClinicianPortal } from "./views/ClinicianPortal";
 
@@ -12,6 +13,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: Home,
+      },
+      {
+        path: "dashboard",
+        Component: ResultsDashboard,
       },
       {
         path: "vault",

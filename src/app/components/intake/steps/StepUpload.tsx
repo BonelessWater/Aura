@@ -83,7 +83,7 @@ export const StepUpload = ({
             >
               {file.status === 'parsing' && (
                 <motion.div
-                  className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#2563EB] to-[#7B61FF]"
+                  className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#3ECFCF] to-[#7B61FF]"
                   initial={{ width: '0%' }}
                   animate={{ width: '100%' }}
                   transition={{ duration: 1.2, ease: 'linear' }}
@@ -104,7 +104,7 @@ export const StepUpload = ({
                   animate={{ scale: 1 }}
                   transition={{ type: "spring" }}
                 >
-                  <Check className="w-5 h-5 text-[#2563EB]" />
+                  <Check className="w-5 h-5 text-[#3ECFCF]" />
                 </motion.div>
               )}
             </motion.div>

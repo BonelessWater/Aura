@@ -1,34 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Helper for Clinical Translation hover only
 export const DoctorHoverHelper = ({ boxRef }: { boxRef: React.RefObject<HTMLDivElement> }) => {
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const box = boxRef?.current;
+    const box = boxRef.current;
     if (!box) return;
-
+    // Only trigger on hover of text inside the box
     const onEnter = (e: Event) => {
       const target = e.target as HTMLElement;
-      if (box.contains(target) && (target.tagName === 'P' || target.tagName === 'SPAN' || target.tagName === 'BUTTON' || target.closest('button'))) {
-        // Find the closest card/block ancestor to position against
-        const anchor = target.closest('button') || target.closest('[class*="rounded"]') || target;
-        const boxRect = box.getBoundingClientRect();
-        const anchorRect = anchor.getBoundingClientRect();
-        setPos({
-          // Offset so her hands (~75% down the 56px image = 42px) sit on the card's top edge
-          top: anchorRect.top - boxRect.top - 42,
-          // Position her at 5% from the left edge of the card
-          left: anchorRect.left - boxRect.left + (anchorRect.width * 0.05) - 28,
-        });
+      if (box.contains(target) && (target.tagName === 'P' || target.tagName === 'SPAN')) {
+        setShow(true);
       }
     };
-
-    const onLeave = () => {
-      setPos(null);
+    const onLeave = (e: Event) => {
+      setShow(false);
     };
-
     box.addEventListener('mouseover', onEnter);
     box.addEventListener('mouseout', onLeave);
     return () => {
@@ -37,26 +26,27 @@ export const DoctorHoverHelper = ({ boxRef }: { boxRef: React.RefObject<HTMLDivE
     };
   }, [boxRef]);
 
+  // Position: absolute top left of the box
   return (
     <AnimatePresence>
-      {pos && (
+      {show && (
         <motion.img
           key="doctor-helper"
           src="/assets/doctor-hero-hover.png"
           alt=""
-          initial={{ opacity: 0, scale: 0.8, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 8 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 22, mass: 0.4 }}
+          initial={{ opacity: 0, scale: 0.7, y: -10 }}
+          animate={{ opacity: 1, scale: 1.25, y: 0 }}
+          exit={{ opacity: 0, scale: 0.7, y: -10 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 18, mass: 0.5 }}
           style={{
             position: 'absolute',
-            top: pos.top,
-            left: pos.left,
-            width: 56,
-            height: 56,
+            top: '-32px',
+            left: '-32px',
+            width: 96,
+            height: 96,
             zIndex: 99,
             pointerEvents: 'none',
-            filter: 'drop-shadow(0 0 8px rgba(123,97,255,0.5)) drop-shadow(0 0 16px rgba(37,99,235,0.3))',
+            filter: 'drop-shadow(0 0 16px #7B61FF) drop-shadow(0 0 32px #3ECFCF)',
           }}
         />
       )}

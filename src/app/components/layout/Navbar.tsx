@@ -38,7 +38,7 @@ export const Navbar = () => {
     >
       {/* Left: Logo */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/dashboard')}
         className="flex items-center gap-2 group"
       >
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7B61FF] to-[#2563EB] flex items-center justify-center">
@@ -52,11 +52,10 @@ export const Navbar = () => {
       {/* Right: Avatar */}
       <button
         onClick={() => navigate(isVault ? '/' : '/vault')}
-        className={`relative rounded-full transition-all ${
-          isVault
+        className={`relative rounded-full transition-all ${isVault
             ? 'ring-2 ring-[#2563EB] ring-offset-2 ring-offset-[#0A0D14]'
             : 'hover:ring-2 hover:ring-[#7B61FF]/50 hover:ring-offset-2 hover:ring-offset-[#0A0D14]'
-        }`}
+          }`}
       >
         <GenerativeAvatar seed="aura_user_42" size={36} />
         {/* Online indicator */}
