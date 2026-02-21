@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-display: "Clash Display", sans-serif;
+
+  --color-background: #0A0D14;
+  --color-primary: #7B61FF;
+  --color-secondary: #3ECFCF;
+  --color-cta: #F4A261;
+  --color-text: #F0F2F8;
+  --color-muted: #8A93B2;
+  --color-error: #E07070;
+  --color-success: #52D0A0;
+
+  /* Centralized animation timings */
+  --ease-hero: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 600ms;
+
+  --animate-spin-slow: spin 60s linear infinite;
+  --animate-pulse-slow: pulse 10s ease-in-out infinite;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+
+  /* Focus states for accessibility */
+  *:focus-visible {
+    outline: 2px solid #3ECFCF;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card-glass {
+    background: rgba(10, 13, 20, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(123, 97, 255, 0.15);
+    border-radius: 16px;
+  }
+  
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 20px rgba(123, 97, 255, 0.5);
+  }
+
+  /* Shimmer skeleton animation */
+  .skeleton-shimmer {
+    background: #1A1D2A;
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(123,97,255,0.05), transparent);
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Smooth scroll target offset */
+  .scroll-target {
+    scroll-margin-top: 80px;
+  }
+
+  /* Dashboard card with glassmorphism + hover glow */
+  .dashboard-card {
+    background: rgba(19, 22, 31, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(123, 97, 255, 0.12);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 300ms ease;
+  }
+  .dashboard-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(123, 97, 255, 0.04) 0%, rgba(62, 207, 207, 0.02) 50%, transparent 100%);
+    pointer-events: none;
+  }
+  .dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(123, 97, 255, 0.12), 0 0 0 1px rgba(123, 97, 255, 0.18);
+    border-color: rgba(123, 97, 255, 0.25);
+  }
+
+  /* Inner glow variants */
+  .glow-violet {
+    box-shadow: inset 0 0 60px rgba(123, 97, 255, 0.06);
+  }
+  .glow-teal {
+    box-shadow: inset 0 0 60px rgba(62, 207, 207, 0.06);
+  }
+  .glow-rose {
+    box-shadow: inset 0 0 60px rgba(224, 112, 112, 0.06);
+  }
+
+  /* Gradient border accent for special cards */
+  .gradient-border-teal {
+    border-image: linear-gradient(135deg, rgba(62, 207, 207, 0.3), rgba(123, 97, 255, 0.15)) 1;
+    border-image-slice: 1;
+  }
+
+  /* Sidebar active gradient indicator */
+  .sidebar-active-indicator {
+    background: linear-gradient(180deg, #7B61FF, #3ECFCF);
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Score gauge glow ring */
+  .gauge-glow {
+    filter: drop-shadow(0 0 20px rgba(123, 97, 255, 0.3));
+  }
+
+  /* Section divider with gradient */
+  .gradient-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(123, 97, 255, 0.2), rgba(62, 207, 207, 0.15), transparent);
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Reduced motion: disable background particles, mesh spin, and all transitions */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  canvas {
+    display: none !important;
+  }
+}
