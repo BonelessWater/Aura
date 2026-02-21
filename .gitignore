@@ -1,18 +1,3 @@
-.claude
-.vscode
-
-# Environment variables
-.env
-
-# Python 
-venv
-__pycache__/
-
-/data/
-
-# Claude
-.claude/
-
 # Environment & secrets
 .env
 .env.*
@@ -24,7 +9,6 @@ __pycache__/
 *.pyd
 .Python
 *.egg-info/
-dist/
 build/
 *.egg
 .eggs/
@@ -47,6 +31,12 @@ htmlcov/
 models/
 checkpoints/
 
+# Data
+/data/
+
+# Downloaded datasets
+scripts/downloads/
+
 # Temp upload files
 /tmp/
 
@@ -57,9 +47,20 @@ checkpoints/
 # Node
 node_modules/
 
+# Build output
+dist/
+
 # macOS
 .DS_Store
 
 # IDE
 .vscode/
 .idea/
+
+# Claude / Agents
+.claude/
+.agents/
+
+# Infrastructure docs with secrets
+databricks.md
+vm.md
