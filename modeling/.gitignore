@@ -1,0 +1,41 @@
+# Raw data - never commit (large files, may have licensing restrictions)
+data/raw/
+
+# Model checkpoints (large binary files)
+experiments/checkpoints/*.pkl
+experiments/checkpoints/*.joblib
+experiments/checkpoints/*.xgb
+experiments/checkpoints/*.lgb
+
+# Logs
+experiments/logs/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment
+.env
+.venv/
+env/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

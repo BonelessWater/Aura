@@ -1,0 +1,12 @@
+.claude
+.vscode
+
+# Environment variables
+.env
+
+# Python 
+venv
+__pycache__/
+
+/data/
+
