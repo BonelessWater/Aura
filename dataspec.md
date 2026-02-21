@@ -13,31 +13,9 @@ This specification outlines the key data sources required for training the Aura 
 *   **License**: CC BY
 *   **Protocol**: Direct download via DOI link.
 
-### Comprehensive Autoimmune Disorder Dataset (Kaggle)
-*   **Description**: 12,500 records linking CBC metrics to autoimmune outcomes and illness duration.
-*   **Host**: Kaggle
-*   **Direct Link**: [kaggle.com/datasets/abdullahragheb/all-autoimmune-disorder-10k](https://www.kaggle.com/datasets/abdullahragheb/all-autoimmune-disorder-10k)
-*   **Key Features**: Age, Gender, Illness Duration, RBC, Hemoglobin, Hematocrit, MCV, MCH.
-*   **Format**: CSV (3.35 MB)
-*   **License**: MIT
-*   **Protocol**: `kaggle datasets download -d abdullahragheb/all-autoimmune-disorder-10k`
-
 ---
 
-## 2. Gastrointestinal Cluster Specialization
-
-### Gastrointestinal Disease Dataset (Kaggle)
-*   **Description**: 30,560 records for identifying structural GI autoimmunity (IBD) vs. functional distress.
-*   **Host**: Kaggle
-*   **Direct Link**: [kaggle.com/datasets/amanik000/gastrointestinal-disease-dataset](https://www.kaggle.com/datasets/amanik000/gastrointestinal-disease-dataset)
-*   **Key Features**: Age, Gender, Weight, BMI, CRP/ESR, Fecal Calprotectin.
-*   **Format**: CSV
-*   **License**: CC BY 4.0
-*   **Protocol**: Direct download via Kaggle API or web interface.
-
----
-
-## 3. Epidemiological Baseline and Population Norms
+## 2. Epidemiological Baseline and Population Norms
 
 ### NHANES (National Health and Nutrition Examination Survey)
 *   **Description**: Large-scale US population health survey with continuous cycles.
@@ -48,18 +26,9 @@ This specification outlines the key data sources required for training the Aura 
 *   **License**: Public Domain
 *   **Protocol**: Download via "Questionnaires, Datasets, and Related Documentation" directory. Use `pd.read_sas()` in Python.
 
-### ImmPort 10,000 Immunomes Project (10KIP)
-*   **Description**: Harmonized baseline of 10,344 healthy subjects for reference thresholds.
-*   **Host**: ImmPort (NIAID)
-*   **Direct Link**: [http://10kimmunomes.org/](http://10kimmunomes.org/)
-*   **Key Features**: CBC, CMP, Lipid Profiles, Clinical Lab Tests.
-*   **Format**: TSV/CSV/SQL
-*   **License**: ImmPort DUA (Registration required)
-*   **Protocol**: Register at ImmPort portal, accept DUA, then download via portal or GA4GH DRS API.
-
 ---
 
-## 4. Population-Scale Genetic and Clinical Repositories
+## 3. Population-Scale Genetic and Clinical Repositories
 
 ### Autoimmune Disease Knowledge Portal (Shigesi 2025 & Million Veterans)
 *   **Description**: Aggregated large-scale GWAS and clinical phenotyping datasets.
@@ -85,7 +54,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 5. Pharmacological and Targeted Molecular Datasets
+## 4. Pharmacological and Targeted Molecular Datasets
 
 ### Drug-Induced Autoimmunity Prediction (UCI)
 *   **Description**: Molecular descriptors for predicting autoimmune mimicry from medications.
@@ -116,7 +85,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 6. Transcriptomics and Epigenomics
+## 5. Transcriptomics and Epigenomics
 
 ### ADEx (Autoimmune Diseases Explorer)
 *   **Description**: 82 curated transcriptomics and methylation studies covering 5,609 samples across SLE, RA, Sjogren's syndrome, systemic sclerosis, and type 1 diabetes. All data sourced from NCBI-GEO and manually harmonized.
@@ -138,7 +107,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 7. Single-Cell Immune Atlases
+## 6. Single-Cell Immune Atlases
 
 ### Human Cell Atlas -- Autoimmune Single-Cell eQTL Project
 *   **Description**: 1,267,758 PBMCs from 982 subjects with single-cell eQTL mapping to autoimmune GWAS loci. Identifies which immune cell types drive genetic risk for autoimmune diseases.
@@ -160,16 +129,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 8. Gut Microbiome
-
-### GMrepo v2
-*   **Description**: Curated database of 71,642 human gut metagenome runs/samples (45,111 16S rRNA + 26,531 shotgun metagenomics) across 353 projects, with disease phenotype labels including autoimmune conditions.
-*   **Host**: Chinese National Genomics Data Center
-*   **Direct Link**: [https://gmrepo.humangut.info/](https://gmrepo.humangut.info/)
-*   **Key Features**: Microbial taxon relative abundances, alpha/beta diversity, disease-associated microbial signatures (IBD, RA, T1D).
-*   **Format**: TSV / API
-*   **License**: Open Access
-*   **Protocol**: Query by phenotype via web interface or REST API, bulk download available.
+## 7. Gut Microbiome
 
 ### Human Microbiome Project (HMP)
 *   **Description**: NIH-funded reference microbiome dataset from 300 healthy adults across 18 body sites, plus disease cohort samples. 16S and whole metagenome shotgun sequencing.
@@ -182,7 +142,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 9. Expanded Genetics and GWAS
+## 8. Expanded Genetics and GWAS
 
 ### NHGRI-EBI GWAS Catalog -- Full Summary Statistics
 *   **Description**: 625,113+ curated SNP-trait associations from published GWAS. Full genome-wide summary statistics available for 66% of cataloged studies (~56 TB total). Autoimmune diseases are among the most heavily represented trait categories.
@@ -223,7 +183,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 10. Proteomics
+## 9. Proteomics
 
 ### Olink Insight / UK Biobank Pharma Proteomics Project (UKB-PPP)
 *   **Description**: 300,000+ protein-disease risk associations across 106 diseases derived from Olink Explore 3072 profiling of 50,000+ UK Biobank participants. Largest population-scale plasma proteomics study to date.
@@ -245,7 +205,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 11. Metabolomics
+## 10. Metabolomics
 
 ### Serum Metabolome Database (HMDB)
 *   **Description**: 4,651 small molecule metabolites with 10,895 concentration values in human serum, linked to disease associations. Part of the broader Human Metabolome Database (220,000+ metabolite entries).
@@ -267,7 +227,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 12. Patient-Reported Outcomes
+## 11. Patient-Reported Outcomes
 
 ### Flaredown Autoimmune Symptom Tracker
 *   **Description**: Real-world patient-reported data from 1,700+ chronic illness patients across 57 countries. Daily longitudinal tracking of symptom severity, treatments and doses, and environmental triggers (foods, stress, allergens). Users report ~8 conditions on average, reflecting real-world comorbidity patterns.
@@ -280,7 +240,7 @@ This specification outlines the key data sources required for training the Aura 
 
 ---
 
-## 13. Environmental Exposure Covariates
+## 12. Environmental Exposure Covariates
 
 ### Comparative Toxicogenomics Database (CTD)
 *   **Description**: Manually curated chemical-gene-disease interaction database linking environmental chemicals to autoimmune disease pathways. Enables environmental risk factor modeling.

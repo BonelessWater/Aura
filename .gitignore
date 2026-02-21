@@ -60,6 +60,7 @@ dist/
 # Claude / Agents
 .claude/
 .agents/
+CLAUDE.md
 
 # Infrastructure docs with secrets
 databricks.md
