@@ -1,0 +1,36 @@
+# Aura - Autoimmune Risk Analysis
+# Python dependencies
+
+# Core
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+
+# Modeling
+xgboost>=2.0
+lightgbm>=4.0
+
+# Explainability
+shap>=0.43
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
+plotly>=5.15
+
+# Data loading
+openpyxl          # Excel files
+kaggle            # Kaggle API
+pyreadstat        # SAS/SPSS files (for NHANES .XPT)
+pyarrow           # Parquet files
+python-dotenv     # Environment variables
+databricks-sql-connector  # Databricks Unity Catalog
+
+# Notebooks
+jupyterlab>=4.0
+ipywidgets>=8.0
+
+# Utilities
+tqdm              # Progress bars
+pyyaml            # Config files
+joblib            # Model serialization
