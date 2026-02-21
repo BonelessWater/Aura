@@ -69,7 +69,7 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background:
-            'linear-gradient(180deg, transparent 0%, rgba(62,207,207,0.03) 48%, rgba(62,207,207,0.08) 50%, rgba(62,207,207,0.03) 52%, transparent 100%)',
+            'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 48%, rgba(37,99,235,0.08) 50%, rgba(37,99,235,0.03) 52%, transparent 100%)',
         }}
         animate={{ y: ['-100%', '100%'] }}
         transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
@@ -87,13 +87,13 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
           className="flex items-center gap-2 mb-1"
         >
           <motion.div
-            className="w-2 h-2 rounded-full bg-[#3ECFCF]"
+            className="w-2 h-2 rounded-full bg-[#2563EB]"
             animate={{ opacity: [1, 0.2, 1] }}
             transition={{ duration: 1, repeat: Infinity }}
           />
           <span
-            className="text-[10px] uppercase tracking-[0.25em] font-mono text-[#3ECFCF]"
-            style={{ textShadow: '0 0 8px rgba(62,207,207,0.8)' }}
+            className="text-[10px] uppercase tracking-[0.25em] font-mono text-[#2563EB]"
+            style={{ textShadow: '0 0 8px rgba(37,99,235,0.8)' }}
           >
             AURA — LIVE ANALYSIS
           </span>
@@ -106,7 +106,7 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
           className="text-xl md:text-2xl font-display font-bold text-white text-center"
           style={{
             textShadow:
-              '0 0 12px rgba(62,207,207,0.6), 0 0 30px rgba(62,207,207,0.3), 0 2px 4px rgba(0,0,0,0.8)',
+              '0 0 12px rgba(37,99,235,0.6), 0 0 30px rgba(37,99,235,0.3), 0 2px 4px rgba(0,0,0,0.8)',
           }}
         >
           Analyzing your data…
@@ -115,10 +115,10 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
         <motion.span
           animate={{ opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-2xl md:text-3xl font-mono font-bold text-[#3ECFCF] mt-1"
+          className="text-2xl md:text-3xl font-mono font-bold text-[#2563EB] mt-1"
           style={{
             textShadow:
-              '0 0 14px rgba(62,207,207,0.9), 0 0 40px rgba(62,207,207,0.4)',
+              '0 0 14px rgba(37,99,235,0.9), 0 0 40px rgba(37,99,235,0.4)',
           }}
         >
           {Math.round(progress)}%
@@ -153,7 +153,7 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
             <span
               className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] font-mono font-bold mb-2 self-start"
               style={{
-                color: status === 'completed' ? '#3ECFCF' : status === 'active' ? '#7B61FF' : 'rgba(200,210,230,0.4)',
+                color: status === 'completed' ? '#2563EB' : status === 'active' ? '#7B61FF' : 'rgba(200,210,230,0.4)',
                 textShadow: '0 0 10px currentColor, 0 0 20px currentColor',
               }}
             >
@@ -166,14 +166,14 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
               style={{
                 filter:
                   status === 'completed'
-                    ? 'drop-shadow(0 0 12px rgba(62,207,207,1)) drop-shadow(0 0 4px rgba(62,207,207,0.8))'
+                    ? 'drop-shadow(0 0 12px rgba(37,99,235,1)) drop-shadow(0 0 4px rgba(37,99,235,0.8))'
                     : status === 'active'
                       ? 'drop-shadow(0 0 12px rgba(123,97,255,1)) drop-shadow(0 0 4px rgba(123,97,255,0.8))'
                       : 'drop-shadow(0 0 4px rgba(200,210,230,0.3))',
               }}
             >
               {status === 'completed' ? (
-                <CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-[#3ECFCF]" />
+                <CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-[#2563EB]" />
               ) : (
                 <Icon
                   className={`w-6 h-6 md:w-7 md:h-7 ${
@@ -193,7 +193,7 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
               style={{
                 textShadow:
                   status !== 'pending'
-                    ? '0 0 12px rgba(62,207,207,0.8), 0 0 24px rgba(62,207,207,0.4), 0 2px 6px rgba(0,0,0,1)'
+                    ? '0 0 12px rgba(37,99,235,0.8), 0 0 24px rgba(37,99,235,0.4), 0 2px 6px rgba(0,0,0,1)'
                     : '0 1px 4px rgba(0,0,0,0.8)',
               }}
             >
@@ -207,11 +207,11 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
                 style={{
                   background:
                     status === 'completed'
-                      ? 'linear-gradient(90deg, #3ECFCF, #3ECFCF)'
-                      : 'linear-gradient(90deg, #7B61FF, #3ECFCF)',
+                      ? 'linear-gradient(90deg, #2563EB, #2563EB)'
+                      : 'linear-gradient(90deg, #7B61FF, #2563EB)',
                   boxShadow:
                     status !== 'pending'
-                      ? '0 0 8px rgba(62,207,207,0.7), 0 0 20px rgba(62,207,207,0.3)'
+                      ? '0 0 8px rgba(37,99,235,0.7), 0 0 20px rgba(37,99,235,0.3)'
                       : 'none',
                 }}
                 initial={{ width: '0%' }}
@@ -236,7 +236,7 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
               style={{
                 color:
                   status === 'completed'
-                    ? '#3ECFCF'
+                    ? '#2563EB'
                     : status === 'active'
                       ? '#7B61FF'
                       : 'rgba(200,210,230,0.3)',

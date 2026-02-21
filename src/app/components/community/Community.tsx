@@ -26,7 +26,7 @@ const posts = [
     likes: 156,
     comments: 42,
     time: "5h ago",
-    avatarColor: "#3ECFCF"
+    avatarColor: "#2563EB"
   },
   {
     id: 3,
@@ -78,7 +78,7 @@ export const Community = ({ onClose }: CommunityProps) => {
           </motion.div>
 
           {/* Moderation Banner */}
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-[#3ECFCF]/10 border border-[#3ECFCF]/20 text-[#3ECFCF] text-sm">
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-[#2563EB]/10 border border-[#2563EB]/20 text-[#2563EB] text-sm">
             <ShieldAlert className="w-5 h-5 flex-shrink-0" />
             <p>
               This is a space for navigation, not diagnosis. Medical advice is auto-removed by our moderation bot.
@@ -127,7 +127,7 @@ export const Community = ({ onClose }: CommunityProps) => {
                     <Heart className="w-4 h-4 group-hover/like:fill-current" />
                     {post.likes}
                   </button>
-                  <button className="flex items-center gap-2 hover:text-[#3ECFCF] transition-colors">
+                  <button className="flex items-center gap-2 hover:text-[#2563EB] transition-colors">
                     <MessageSquare className="w-4 h-4" />
                     {post.comments}
                   </button>
@@ -145,7 +145,7 @@ export const Community = ({ onClose }: CommunityProps) => {
           className="fixed bottom-8 right-8 z-50"
           whileHover={{ scale: 1.05 }}
         >
-          <button className="flex items-center gap-0 overflow-hidden h-12 rounded-full bg-[#00B4D8] text-white shadow-lg hover:shadow-[0_0_20px_rgba(0,180,216,0.4)] transition-all group pr-4 pl-4 hover:pl-5">
+          <button className="flex items-center gap-0 overflow-hidden h-12 rounded-full bg-[#2563EB] text-white shadow-lg hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all group pr-4 pl-4 hover:pl-5">
              <Plus className="w-6 h-6 flex-shrink-0" />
              <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:ml-2">
                Share Your Experience

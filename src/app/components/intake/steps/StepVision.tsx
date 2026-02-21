@@ -28,9 +28,9 @@ export const StepVision = ({ onComplete }: StepVisionProps) => {
           <span className="font-medium">Take Photo</span>
         </button>
 
-        <button className="h-40 bg-[#1A1D26] border border-[#2A2E3B] rounded-xl flex flex-col items-center justify-center gap-4 hover:border-[#3ECFCF] hover:bg-[#3ECFCF]/5 transition-all group">
-          <div className="w-12 h-12 rounded-full bg-[#3ECFCF]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <PlayCircle className="w-6 h-6 text-[#3ECFCF]" />
+        <button className="h-40 bg-[#1A1D26] border border-[#2A2E3B] rounded-xl flex flex-col items-center justify-center gap-4 hover:border-[#2563EB] hover:bg-[#2563EB]/5 transition-all group">
+          <div className="w-12 h-12 rounded-full bg-[#2563EB]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <PlayCircle className="w-6 h-6 text-[#2563EB]" />
           </div>
           <span className="font-medium">Record Video</span>
         </button>

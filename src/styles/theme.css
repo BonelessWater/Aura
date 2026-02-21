@@ -7,7 +7,7 @@
 
   --color-background: #0A0D14;
   --color-primary: #7B61FF;
-  --color-secondary: #3ECFCF;
+  --color-secondary: #2563EB;
   --color-cta: #F4A261;
   --color-text: #F0F2F8;
   --color-muted: #8A93B2;
@@ -47,7 +47,7 @@
 
   /* Focus states for accessibility */
   *:focus-visible {
-    outline: 2px solid #3ECFCF;
+    outline: 2px solid #2563EB;
     outline-offset: 2px;
   }
 }
@@ -140,7 +140,7 @@
 
   /* Sidebar active gradient indicator */
   .sidebar-active-indicator {
-    background: linear-gradient(180deg, #7B61FF, #3ECFCF);
+    background: linear-gradient(180deg, #7B61FF, #2563EB);
     border-radius: 0 4px 4px 0;
   }
 
@@ -211,6 +211,20 @@
 
   50% {
     box-shadow: 0 -4px 40px rgba(123, 97, 255, 0.14);
+  }
+}
+
+@keyframes aura-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
   }
 }
 

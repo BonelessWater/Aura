@@ -16,7 +16,7 @@ const SYMPTOM_CHIPS = [
 ];
 
 const MOOD_OPTIONS: { value: NoteEntry['mood']; icon: typeof Smile; label: string; color: string }[] = [
-  { value: 'good', icon: Smile,  label: 'Good Day',  color: '#3ECFCF' },
+  { value: 'good', icon: Smile,  label: 'Good Day',  color: '#2563EB' },
   { value: 'okay', icon: Meh,    label: 'Okay',      color: '#F4A261' },
   { value: 'bad',  icon: Frown,  label: 'Rough Day', color: '#E07070' },
 ];

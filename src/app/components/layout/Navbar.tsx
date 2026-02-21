@@ -41,7 +41,7 @@ export const Navbar = () => {
         onClick={() => navigate('/')}
         className="flex items-center gap-2 group"
       >
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7B61FF] to-[#3ECFCF] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7B61FF] to-[#2563EB] flex items-center justify-center">
           <span className="text-white text-sm font-mono font-bold">A</span>
         </div>
         <span className="font-display text-lg text-white/90 tracking-wide hidden sm:inline group-hover:text-white transition-colors">
@@ -54,7 +54,7 @@ export const Navbar = () => {
         onClick={() => navigate(isVault ? '/' : '/vault')}
         className={`relative rounded-full transition-all ${
           isVault
-            ? 'ring-2 ring-[#3ECFCF] ring-offset-2 ring-offset-[#0A0D14]'
+            ? 'ring-2 ring-[#2563EB] ring-offset-2 ring-offset-[#0A0D14]'
             : 'hover:ring-2 hover:ring-[#7B61FF]/50 hover:ring-offset-2 hover:ring-offset-[#0A0D14]'
         }`}
       >

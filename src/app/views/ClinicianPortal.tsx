@@ -50,7 +50,7 @@ const radarConditions = [
   },
   {
     name: 'POTS',
-    color: '#3ECFCF',
+    color: '#2563EB',
     data: [
       { criterion: 'PEM', score: 55 },
       { criterion: 'Fatigue > 6mo', score: 60 },
@@ -267,7 +267,7 @@ export const ClinicianPortal = () => {
         <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-[#7B61FF] to-[#3ECFCF] flex items-center justify-center">
+              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-[#7B61FF] to-[#2563EB] flex items-center justify-center">
                 <span className="text-white text-xs font-mono font-bold">A</span>
               </div>
               <span className="text-sm font-semibold text-gray-900 tracking-wide">

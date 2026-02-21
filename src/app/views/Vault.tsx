@@ -56,7 +56,7 @@ const StorageToggle = ({
       className={clsx(
         'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex-1 justify-center',
         isCloud
-          ? 'bg-[#3ECFCF]/15 border border-[#3ECFCF]/40 text-[#3ECFCF] shadow-[0_0_20px_rgba(62,207,207,0.1)]'
+          ? 'bg-[#2563EB]/15 border border-[#2563EB]/40 text-[#2563EB] shadow-[0_0_20px_rgba(37,99,235,0.1)]'
           : 'text-[#8A93B2] hover:text-white'
       )}
     >
@@ -242,7 +242,7 @@ export const Vault = () => {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#3ECFCF]" />
+                <FileText className="w-4 h-4 text-[#2563EB]" />
                 <h2 className="text-lg font-display font-medium text-white">
                   Document Archive
                 </h2>
@@ -309,7 +309,7 @@ export const Vault = () => {
                           {/* Actions */}
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                              className="p-2 rounded-lg hover:bg-[#1A1D26] text-[#8A93B2] hover:text-[#3ECFCF] transition-colors"
+                              className="p-2 rounded-lg hover:bg-[#1A1D26] text-[#8A93B2] hover:text-[#2563EB] transition-colors"
                               title="Download"
                             >
                               <Download className="w-4 h-4" />
@@ -459,8 +459,8 @@ export const Vault = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#3ECFCF]/10 flex items-center justify-center">
-                    <Lock className="w-5 h-5 text-[#3ECFCF]" />
+                  <div className="w-10 h-10 rounded-full bg-[#2563EB]/10 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-[#2563EB]" />
                   </div>
                   <h3 className="text-lg font-display font-medium text-white">
                     Set Encryption Password
@@ -485,7 +485,7 @@ export const Vault = () => {
                     value={encPassword}
                     onChange={(e) => setEncPassword(e.target.value)}
                     placeholder="Password (min 8 characters)"
-                    className="w-full bg-[#0D0F16] border border-[#2A2E3B] rounded-lg px-4 py-3 text-sm text-[#F0F2F8] placeholder:text-[#8A93B2]/40 focus:border-[#3ECFCF] focus:outline-none"
+                    className="w-full bg-[#0D0F16] border border-[#2A2E3B] rounded-lg px-4 py-3 text-sm text-[#F0F2F8] placeholder:text-[#8A93B2]/40 focus:border-[#2563EB] focus:outline-none"
                   />
                   <button
                     type="button"
@@ -501,7 +501,7 @@ export const Vault = () => {
                   value={encConfirm}
                   onChange={(e) => setEncConfirm(e.target.value)}
                   placeholder="Confirm password"
-                  className="w-full bg-[#0D0F16] border border-[#2A2E3B] rounded-lg px-4 py-3 text-sm text-[#F0F2F8] placeholder:text-[#8A93B2]/40 focus:border-[#3ECFCF] focus:outline-none"
+                  className="w-full bg-[#0D0F16] border border-[#2A2E3B] rounded-lg px-4 py-3 text-sm text-[#F0F2F8] placeholder:text-[#8A93B2]/40 focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
 
@@ -514,7 +514,7 @@ export const Vault = () => {
                 </button>
                 <button
                   onClick={handleEncryptionSetup}
-                  className="flex-1 py-2.5 rounded-lg bg-[#3ECFCF] text-[#0A0D14] text-sm font-medium hover:bg-[#35b5b5] transition-colors"
+                  className="flex-1 py-2.5 rounded-lg bg-[#2563EB] text-[#0A0D14] text-sm font-medium hover:bg-[#1E40AF] transition-colors"
                 >
                   Enable Cloud Backup
                 </button>

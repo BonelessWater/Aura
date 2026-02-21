@@ -76,7 +76,7 @@ export const SpecialistMap = ({ onClose }: SpecialistMapProps) => {
                 className={clsx(
                   "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
                   filterInNetwork
-                    ? "bg-[#3ECFCF]/15 border-[#3ECFCF]/40 text-[#3ECFCF]"
+                    ? "bg-[#2563EB]/15 border-[#2563EB]/40 text-[#2563EB]"
                     : "border-[#2A2E3B] text-[#8A93B2] hover:text-white hover:border-[#8A93B2]/50"
                 )}
               >
@@ -126,7 +126,7 @@ export const SpecialistMap = ({ onClose }: SpecialistMapProps) => {
                    <span className={clsx(
                      "text-xs px-2 py-1 rounded border",
                      spec.inNetwork
-                       ? "bg-[#3ECFCF]/10 text-[#3ECFCF] border-[#3ECFCF]/20"
+                       ? "bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20"
                        : "bg-[#E07070]/10 text-[#E07070] border-[#E07070]/20"
                    )}>
                      {spec.inNetwork ? 'In Network' : 'Out of Network'}
@@ -149,8 +149,8 @@ export const SpecialistMap = ({ onClose }: SpecialistMapProps) => {
           
           {/* User Location */}
           <div className="absolute top-[80%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group">
-             <div className="w-4 h-4 rounded-full bg-[#3ECFCF] shadow-[0_0_20px_#3ECFCF] animate-pulse" />
-             <span className="mt-2 text-xs font-medium text-[#3ECFCF] bg-[#0A0D14]/80 px-2 py-1 rounded">You</span>
+             <div className="w-4 h-4 rounded-full bg-[#2563EB] shadow-[0_0_20px_#2563EB] animate-pulse" />
+             <span className="mt-2 text-xs font-medium text-[#2563EB] bg-[#0A0D14]/80 px-2 py-1 rounded">You</span>
           </div>
 
           {/* Specialist Pins */}

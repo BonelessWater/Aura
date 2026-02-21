@@ -56,7 +56,7 @@ export const DoctorHoverHelper = ({ boxRef }: { boxRef: React.RefObject<HTMLDivE
             height: 56,
             zIndex: 99,
             pointerEvents: 'none',
-            filter: 'drop-shadow(0 0 8px rgba(123,97,255,0.5)) drop-shadow(0 0 16px rgba(62,207,207,0.3))',
+            filter: 'drop-shadow(0 0 8px rgba(123,97,255,0.5)) drop-shadow(0 0 16px rgba(37,99,235,0.3))',
           }}
         />
       )}
