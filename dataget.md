@@ -41,12 +41,24 @@ workspace.aura
 | Tier | Table | Rows | Description |
 |------|-------|------|-------------|
 | 1 | `core_matrix` | 48,094 | Unified patient features (CBC, inflammatory markers, demographics, diagnoses) |
+| 1 | `patient_reported_outcomes` | 5,025,070 | Daily symptom/treatment/trigger tracking from Flaredown (~1,700 patients) |
 | 2 | `autoantibody_panel` | 12,085 | Autoantibody test results (ANA, anti-dsDNA, HLA-B27, etc.) |
 | 2 | `longitudinal_labs` | 19,646 | Time-series lab results from ICU patients |
 | 2 | `genetic_risk_scores` | 69,889 | GWAS significant hits from FinnGen R12 + HugeAmp |
+| 2 | `gwas_catalog_associations` | 5,617 | NHGRI-EBI curated autoimmune GWAS hits |
+| 2 | `hla_frequencies` | 11 | AFND HLA allele-disease associations |
+| 2 | `pan_ukbb_sumstats` | 17,212 | Pan-ancestry GWAS summary statistics (T1D) |
+| 2 | `immunobase_credible_sets` | 1,388 | Fine-mapped autoimmune GWAS loci |
+| 2 | `transcriptomics_signatures` | 667,733 | Gene expression signatures (ADEx + IAAA) |
+| 2 | `microbiome_profiles` | 5,544 | Gut microbiome taxonomic profiles (HMP IBDMDB) |
 | 3 | `healthy_baselines` | 110 | Age/sex-stratified reference ranges from healthy NHANES subjects |
 | 3 | `icd_cluster_map` | 111 | ICD-10 to Aura disease cluster mapping |
 | 3 | `drug_risk_index` | 597 | Drug molecular descriptors with autoimmunity risk labels |
+| 3 | `open_targets_associations` | 52,471 | Drug-target-disease evidence scores from Open Targets |
+| 3 | `ctd_chemical_disease` | 194,096 | Chemical-disease interactions (autoimmune filtered) from CTD |
+| 3 | `epa_air_quality_reference` | 25,722 | County-level annual pollutant concentrations (PM2.5, Ozone, NO2, SO2, PM10) |
+| 3 | `hpa_protein_expression` | 20,162 | Protein expression atlas with disease involvement (HPA v25) |
+| 3 | `mendeley_lipidomics` | 1,612 | Mouse EAE lipidomics model data (MS validation) |
 
 ---
 
@@ -275,6 +287,320 @@ Molecular descriptors for 597 drugs with autoimmunity risk labels. From the UCI 
 
 ---
 
+## Tier 1: patient_reported_outcomes
+
+Daily symptom, treatment, and trigger tracking from the Flaredown app (5M+ rows, ~1,700 patients). Each row is one trackable entry per patient per day. Not joinable to `core_matrix` by `patient_id` (different patient populations), but joinable by `diagnosis_cluster` for disease-level aggregation.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `patient_id` | string | Unique identifier (`flaredown_{user_id}`) |
+| `source` | string | Always `flaredown` |
+| `date` | timestamp | Check-in date |
+| `condition` | string | Patient's primary autoimmune condition |
+| `diagnosis_cluster` | string | Aura cluster mapping |
+| `symptom` | string | Symptom name (null for treatment/trigger rows) |
+| `symptom_severity` | bigint | 0-4 severity scale (null for non-symptom rows) |
+| `treatment` | string | Treatment/medication name (null for symptom/trigger rows) |
+| `treatment_dose` | string | Dose information |
+| `trigger` | string | Food/environmental trigger (null for symptom/treatment rows) |
+| `country` | string | Patient country |
+| `age` | double | Patient age |
+| `sex` | string | Patient sex |
+
+```sql
+-- Top symptoms by cluster
+SELECT diagnosis_cluster, symptom, COUNT(*) as reports, AVG(symptom_severity) as avg_severity
+FROM workspace.aura.patient_reported_outcomes
+WHERE symptom IS NOT NULL
+GROUP BY diagnosis_cluster, symptom
+ORDER BY reports DESC
+LIMIT 20;
+```
+
+---
+
+## Tier 2: gwas_catalog_associations
+
+NHGRI-EBI GWAS Catalog entries filtered to autoimmune traits (5,617 rows). Curated associations with trait-level p-values and odds ratios.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `efo_id` | string | Experimental Factor Ontology ID (e.g., `MONDO_0007915`) |
+| `trait` | string | Disease/trait name |
+| `pvalue` | double | GWAS p-value |
+| `pvalue_mlog` | bigint | -log10(p-value) |
+| `risk_allele_frequency` | string | Risk allele frequency |
+| `or_beta` | double | Odds ratio or beta coefficient |
+| `ci_95` | string | 95% confidence interval |
+| `diagnosis_cluster` | string | Aura cluster |
+| `diagnosis_icd10` | string | ICD-10 code |
+| `source` | string | Always `gwas_catalog` |
+
+---
+
+## Tier 2: hla_frequencies
+
+Allele Frequency Net Database (AFND) HLA allele-disease associations (11 rows). Links HLA alleles to autoimmune disease susceptibility across populations.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `allele` | string | HLA allele name |
+| `associated_diseases` | string | Disease associations |
+| `locus` | string | HLA locus (e.g., A, B, DRB1) |
+| `hla_locus` | string | Same as locus |
+| `n_populations` | bigint | Number of populations studied |
+| `frequencies_found` | boolean | Whether frequency data is available |
+| `diagnosis_cluster` | string | Aura cluster |
+| `diagnosis_icd10` | string | ICD-10 code |
+| `source` | string | Always `afnd` |
+
+---
+
+## Tier 2: pan_ukbb_sumstats
+
+Pan-ancestry UK Biobank GWAS summary statistics for Type 1 Diabetes (17,212 genome-wide significant variants). Includes meta-analysis and ancestry-specific results (AFR, CSA, EUR).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `chr` | bigint | Chromosome |
+| `pos` | bigint | Genomic position |
+| `ref` / `alt` | string | Reference and alternate alleles |
+| `beta_meta` | double | Meta-analysis effect size |
+| `se_meta` | double | Meta-analysis standard error |
+| `neglog10_pval_meta` | double | -log10(p-value) from meta-analysis |
+| `af_cases_meta` | double | Allele frequency in cases |
+| `af_controls_meta` | double | Allele frequency in controls |
+| `beta_AFR` / `beta_CSA` / `beta_EUR` | double | Ancestry-specific betas |
+| `neglog10_pval_AFR` / `_CSA` / `_EUR` | double | Ancestry-specific -log10 p-values |
+| `phenotype_code` | string | ICD-10 phenotype code (e.g., `E10`) |
+| `sex_group` | string | Sex stratification |
+| `diagnosis_cluster` | string | Aura cluster |
+| `source` | string | Always `pan_ukbb` |
+
+```sql
+-- Top Pan-UKBB variants for T1D by significance
+SELECT chr, pos, ref, alt, neglog10_pval_meta, beta_meta, af_cases_meta
+FROM workspace.aura.pan_ukbb_sumstats
+ORDER BY neglog10_pval_meta DESC
+LIMIT 20;
+```
+
+---
+
+## Tier 2: immunobase_credible_sets
+
+ImmunoBase/GWAS Catalog study metadata filtered to autoimmune diseases (1,388 studies). Contains publication-level data linking GWAS studies to autoimmune traits.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `pubmedid` | bigint | PubMed ID |
+| `first_author` | string | First author |
+| `date` | string | Publication date |
+| `journal` | string | Journal name |
+| `study` | string | Study title |
+| `disease_trait` | string | Disease/trait studied |
+| `initial_sample_size` | string | Discovery sample size |
+| `replication_sample_size` | string | Replication sample size |
+| `association_count` | bigint | Number of associations reported |
+| `diagnosis_cluster` | string | Aura cluster |
+| `diagnosis_icd10` | string | ICD-10 code |
+| `source` | string | Always `immunobase` |
+
+---
+
+## Tier 2: transcriptomics_signatures
+
+Gene expression signatures from autoimmune disease studies (667,733 rows). Aggregated from ADEx (Autoimmune Disease Explorer) and IAAA (Immune Atlas of Autoimmune Arthritis) GEO datasets.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `gene_symbol` | string | Gene symbol |
+| `mean_expression` | double | Mean expression value |
+| `std_expression` | double | Standard deviation |
+| `median_expression` | double | Median expression |
+| `source` | string | `adex` or `iaaa` |
+| `study_id` | string | GEO series ID (e.g., `GSE55235`) |
+| `disease` | string | Disease label |
+| `diagnosis_cluster` | string | Aura cluster |
+| `sample_type` | string | Tissue type |
+| `platform` | string | Microarray platform |
+| `n_samples` | bigint | Number of samples |
+
+```sql
+-- Find differentially expressed genes across autoimmune diseases
+SELECT gene_symbol, diagnosis_cluster, AVG(mean_expression) as avg_expr, COUNT(DISTINCT study_id) as n_studies
+FROM workspace.aura.transcriptomics_signatures
+GROUP BY gene_symbol, diagnosis_cluster
+HAVING COUNT(DISTINCT study_id) > 1
+ORDER BY avg_expr DESC
+LIMIT 50;
+```
+
+---
+
+## Tier 2: microbiome_profiles
+
+Gut microbiome taxonomic profiles from HMP IBDMDB (5,544 rows). Species-level relative abundances from IBD and non-IBD subjects.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `source` | string | Always `hmp_ibdmdb` |
+| `sample_id` | string | Sample identifier |
+| `body_site` | string | Sampling site (e.g., stool) |
+| `diagnosis` | string | Subject diagnosis (CD, UC, nonIBD) |
+| `diagnosis_cluster` | string | Aura cluster |
+| `taxon_level` | string | Taxonomic rank (species) |
+| `taxon_name` | string | Species name |
+| `relative_abundance` | double | Relative abundance (0-1) |
+| `sequencing_method` | string | Sequencing technology |
+
+```sql
+-- Top microbial species in IBD vs controls
+SELECT taxon_name, diagnosis, AVG(relative_abundance) as avg_abundance
+FROM workspace.aura.microbiome_profiles
+WHERE diagnosis IN ('CD', 'UC', 'nonIBD')
+GROUP BY taxon_name, diagnosis
+HAVING AVG(relative_abundance) > 0.01
+ORDER BY avg_abundance DESC;
+```
+
+---
+
+## Tier 3: open_targets_associations
+
+Drug-target-disease evidence from Open Targets Platform (52,471 rows). Multi-source evidence scores linking drug targets to autoimmune diseases.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `disease_id` | string | Disease ontology ID |
+| `disease_name` | string | Disease name |
+| `target_id` | string | Ensembl gene ID |
+| `target_symbol` | string | Gene symbol |
+| `target_name` | string | Full gene/protein name |
+| `overall_score` | double | Aggregate evidence score (0-1) |
+| `literature` | double | Literature mining evidence |
+| `animal_model` | double | Animal model evidence |
+| `genetic_association` | double | Genetic association evidence |
+| `known_drug` | double | Known drug evidence |
+| `rna_expression` | double | RNA expression evidence |
+| `affected_pathway` | double | Pathway analysis evidence |
+| `diagnosis_cluster` | string | Aura cluster |
+| `source` | string | Always `open_targets` |
+
+```sql
+-- Top drug targets for systemic autoimmune diseases
+SELECT target_symbol, target_name, disease_name, overall_score, known_drug, genetic_association
+FROM workspace.aura.open_targets_associations
+WHERE diagnosis_cluster = 'systemic' AND overall_score > 0.5
+ORDER BY overall_score DESC
+LIMIT 30;
+```
+
+---
+
+## Tier 3: ctd_chemical_disease
+
+Chemical-disease interactions from the Comparative Toxicogenomics Database (194,096 rows). Filtered to autoimmune-related diseases. Links environmental chemicals to disease mechanisms.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `chemical_name` | string | Chemical name |
+| `chemical_id` | string | MeSH ID |
+| `cas_rn` | string | CAS Registry Number |
+| `disease_name` | string | Disease name |
+| `disease_id` | string | MeSH Disease ID |
+| `direct_evidence` | string | Evidence type (e.g., `marker/mechanism`) |
+| `inference_gene_symbol` | string | Gene mediating the interaction |
+| `inference_score` | double | Interaction strength score |
+| `omim_ids` | string | OMIM IDs |
+| `pubmed_ids` | string | Supporting PubMed IDs |
+| `diagnosis_cluster` | string | Aura cluster |
+| `source` | string | Always `ctd` |
+
+```sql
+-- Top chemicals associated with autoimmune diseases
+SELECT chemical_name, disease_name, inference_gene_symbol, inference_score
+FROM workspace.aura.ctd_chemical_disease
+WHERE direct_evidence IS NOT NULL
+ORDER BY inference_score DESC
+LIMIT 20;
+```
+
+---
+
+## Tier 3: epa_air_quality_reference
+
+County-level annual pollutant concentrations from EPA AQS (25,722 rows). Covers PM2.5, PM10, Ozone, NO2, and SO2 across US counties and years.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `year` | string | Monitoring year |
+| `state_code` | bigint | FIPS state code |
+| `county_code` | bigint | FIPS county code |
+| `state_name` | string | State name |
+| `county_name` | string | County name |
+| `latitude` | double | Monitor latitude |
+| `longitude` | double | Monitor longitude |
+| `parameter` | string | Pollutant name (PM2.5, Ozone, NO2, SO2, PM10) |
+| `arithmetic_mean` | double | Annual mean concentration |
+| `first_max_value` | double | Annual maximum |
+| `units_of_measure` | string | Measurement units |
+| `observation_count` | bigint | Number of observations |
+| `source` | string | Always `epa_aqs` |
+
+```sql
+-- Average PM2.5 by state
+SELECT state_name, year, AVG(arithmetic_mean) as avg_pm25
+FROM workspace.aura.epa_air_quality_reference
+WHERE parameter = 'PM2.5'
+GROUP BY state_name, year
+ORDER BY avg_pm25 DESC;
+```
+
+---
+
+## Tier 3: hpa_protein_expression
+
+Human Protein Atlas v25 protein expression data filtered to autoimmune-relevant genes (20,162 rows). Includes blood expression, disease involvement, and reliability annotations.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `gene` | string | Gene name |
+| `ensembl` | string | Ensembl gene ID |
+| `uniprot` | string | UniProt ID |
+| `protein_class` | string | Protein classification |
+| `disease_involvement` | string | Associated diseases |
+| `blood_expression_cluster` | string | Blood expression pattern |
+| `rna_blood_cell_specificity` | string | Cell-type specificity |
+| `rna_blood_cell_specificity_score` | double | Specificity score |
+| `blood_concentration_conc_blood_im_pg_l` | double | Blood concentration (immunoassay) |
+| `blood_concentration_conc_blood_ms_pg_l` | double | Blood concentration (mass spec) |
+| `reliability_ih` | string | Immunohistochemistry reliability |
+| `chromosome` | string | Chromosome |
+| `diagnosis_cluster` | string | Aura cluster |
+| `source` | string | Always `hpa_v25` |
+
+---
+
+## Tier 3: mendeley_lipidomics
+
+Mouse EAE (experimental autoimmune encephalomyelitis) lipidomics data (1,612 rows). Long-format lipid concentrations for EAE model vs control mice. EAE is the standard animal model for Multiple Sclerosis.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `ID` | bigint | Sample ID |
+| `DRUG` | bigint | Drug treatment (0/1) |
+| `EAE` | bigint | EAE induction (0=control, 1=EAE model) |
+| `GROUP` | bigint | Experimental group (1-4) |
+| `condition` | string | `control` or `eae_model` |
+| `diagnosis_cluster` | string | `healthy` or `neurological` |
+| `analyte_name` | string | Lipid species name |
+| `value` | double | Lipid concentration |
+| `analyte_type` | string | Always `lipid` |
+| `source` | string | Always `mendeley` |
+
+---
+
 ## Common Query Patterns
 
 ### 1. Compare autoimmune vs healthy CBC
@@ -356,6 +682,45 @@ ORDER BY ABS(beta) DESC
 LIMIT 50;
 ```
 
+### 7. Symptom-treatment patterns from patient reports
+
+```sql
+-- Most common treatments per cluster and their co-reported symptoms
+SELECT pro.diagnosis_cluster, pro.treatment, COUNT(*) as uses,
+       COUNT(DISTINCT pro.patient_id) as patients
+FROM workspace.aura.patient_reported_outcomes pro
+WHERE pro.treatment IS NOT NULL
+GROUP BY pro.diagnosis_cluster, pro.treatment
+ORDER BY uses DESC
+LIMIT 30;
+```
+
+### 8. Cross-reference drug targets with chemical exposures
+
+```sql
+-- Genes that appear in both Open Targets drug targets and CTD chemical interactions
+SELECT DISTINCT ot.target_symbol, ot.disease_name, ctd.chemical_name, ctd.inference_score
+FROM workspace.aura.open_targets_associations ot
+JOIN workspace.aura.ctd_chemical_disease ctd ON ot.target_symbol = ctd.inference_gene_symbol
+WHERE ot.overall_score > 0.5 AND ctd.inference_score > 10
+ORDER BY ot.overall_score DESC
+LIMIT 30;
+```
+
+### 9. Microbiome dysbiosis in IBD
+
+```sql
+-- Species enriched in Crohn's vs healthy controls
+SELECT m1.taxon_name,
+       AVG(CASE WHEN m1.diagnosis = 'CD' THEN m1.relative_abundance END) as cd_abundance,
+       AVG(CASE WHEN m1.diagnosis = 'nonIBD' THEN m1.relative_abundance END) as control_abundance
+FROM workspace.aura.microbiome_profiles m1
+GROUP BY m1.taxon_name
+HAVING cd_abundance IS NOT NULL AND control_abundance IS NOT NULL
+ORDER BY (cd_abundance - control_abundance) DESC
+LIMIT 20;
+```
+
 ---
 
 ## File Locations
@@ -364,31 +729,44 @@ LIMIT 50;
 ```
 /Volumes/workspace/aura/aura_data/
   tier1_core_matrix.parquet
+  tier1_patient_reported_outcomes.parquet
   tier2_autoantibody_panel.parquet
-  tier2_gi_markers.parquet
   tier2_longitudinal_labs.parquet
   tier2_genetic_risk_scores.parquet
+  tier2_gwas_catalog_associations.parquet
+  tier2_hla_frequencies.parquet
+  tier2_pan_ukbb_sumstats.parquet
+  tier2_immunobase_credible_sets.parquet
+  tier2_transcriptomics_signatures.parquet
+  tier2_microbiome_profiles.parquet
   tier3_healthy_baselines.parquet
   tier3_icd_cluster_map.parquet
   tier3_drug_risk_index.parquet
+  tier3_open_targets_associations.parquet
+  tier3_ctd_chemical_disease.parquet
+  tier3_epa_air_quality_reference.parquet
+  tier3_hpa_protein_expression.parquet
+  tier3_mendeley_lipidomics.parquet
   raw/
     nhanes/           -- NHANES SAS transport files (CBC, DEMO, HSCRP, MCQ)
     finngen/          -- FinnGen R12 summary stats (.gz)
     gwas/             -- HugeAmp GWAS associations
-    (+ 20 additional raw source directories staged for future wrangling)
-```
-
-### Local Repository
-```
-data/
-  raw/                -- Raw downloaded files
-  processed/
-    tier1/core_matrix.parquet
-    tier2/autoantibody_panel.parquet
-    tier2/longitudinal_labs.parquet
-    tier3/healthy_baselines.parquet
-    tier3/icd_cluster_map.parquet
-    tier3/drug_risk_index.parquet
+    gwas_catalog/     -- NHGRI-EBI GWAS Catalog (parquet)
+    afnd/             -- Allele Frequency Net Database (parquet)
+    pan_ukbb/         -- Pan-UK Biobank (bgzipped TSV)
+    immunobase/       -- ImmunoBase GWAS studies (TSV)
+    adex/             -- ADEx GEO series matrix files
+    iaaa/             -- IAAA GEO series matrix file
+    hmp/              -- HMP IBDMDB microbiome profiles
+    olink/            -- Olink proteomics (xlsx)
+    hmdb/             -- HMDB metabolomics (CSV)
+    metabolights/     -- MetaboLights (parquet)
+    open_targets/     -- Open Targets associations (parquet)
+    ctd/              -- CTD chemicals-diseases (TSV.gz)
+    epa_aqs/          -- EPA annual monitoring data (CSV/zip)
+    hpa/              -- Human Protein Atlas (TSV)
+    mendeley/         -- Mendeley mouse lipidomics (CSV)
+    flaredown/        -- Flaredown patient export (CSV)
 ```
 
 ---
@@ -403,6 +781,19 @@ data/
 | UCI Drug Autoimmunity (ID: 1104) | Open Access | 597 | Direct download / ucimlrepo |
 | FinnGen R12 (University of Helsinki) | FinnGen DUA | 67,869 hits | Google Cloud Storage |
 | HugeAmp (Broad/UCSD) | Open Access | 2,020 hits | GraphQL API (autoimmune phenotypes) |
+| NHGRI-EBI GWAS Catalog | Open Access | 5,617 | Pre-filtered parquet |
+| AFND (Allele Frequency Net Database) | Open Access | 11 | Pre-filtered parquet |
+| Pan-UK Biobank (Neale Lab) | Open Access | 17,212 | Bgzipped TSV (T1D phenotype) |
+| ImmunoBase / GWAS Catalog | Open Access | 1,388 | TSV download |
+| ADEx (Autoimmune Disease Explorer) | GEO Open | 667,733 | GEO series matrix files |
+| IAAA (Immune Atlas Autoimmune Arthritis) | GEO Open | (merged above) | GEO series matrix file |
+| HMP IBDMDB (NIH) | dbGaP Open | 5,544 | Taxonomic profiles TSV |
+| Open Targets Platform | Open Access | 52,471 | Pre-filtered parquet |
+| CTD (Comparative Toxicogenomics DB) | Open Access | 194,096 | TSV.gz (autoimmune filtered from 9.65M) |
+| EPA AQS (Air Quality System) | Public Domain | 25,722 | Annual CSV downloads (2000-2023) |
+| Human Protein Atlas v25 | CC BY-SA | 20,162 | TSV download (autoimmune filtered from 20K genes) |
+| Mendeley Data (mouse lipidomics) | CC BY-NC-SA | 1,612 | CSV download (EAE model) |
+| Flaredown (patient tracker) | Open Data | 5,025,070 | CSV export |
 
 ---
 
