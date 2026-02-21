@@ -20,9 +20,9 @@ WAREHOUSE_ID = "a3f84fea6e440a44"
 PAGE_SIZE    = 5_000
 OUTPUT_FILE  = "chunks.parquet"
 
-w      = WorkspaceClient()
-offset = 0
-rows   = []
+w          = WorkspaceClient()
+rows       = []
+last_id    = ""   # cursor — empty string sorts before all MD5 hex IDs
 
 print("Pulling chunks from aura.rag.pubmed_chunks...")
 
@@ -32,15 +32,16 @@ while True:
         statement=(
             "SELECT chunk_id, doi, journal, year, section, cluster_tag, text, pmc_id "
             "FROM aura.rag.pubmed_chunks "
-            f"ORDER BY chunk_id LIMIT {PAGE_SIZE} OFFSET {offset}"
+            f"WHERE chunk_id > '{last_id}' "
+            f"ORDER BY chunk_id LIMIT {PAGE_SIZE}"
         ),
-        wait_timeout="50s",
+        wait_timeout="120s",
     )
     batch = r.result.data_array or []
     if not batch:
         break
     rows.extend(batch)
-    offset += PAGE_SIZE
+    last_id = batch[-1][0]   # last chunk_id in this page — next page starts after it
     print(f"  {len(rows):,} chunks pulled...")
 
 print(f"Writing {len(rows):,} chunks to {OUTPUT_FILE}...")
