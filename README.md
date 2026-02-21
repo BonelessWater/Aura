@@ -1,4 +1,8 @@
-# Aura Platform Blueprint
+# Aura
+
+This repository hosts the Aura platform.
+
+## Aura Platform Blueprint
 
 This document outlines the integrated blueprint for the Aura platform, combining a multimodal user experience, a dual-confidence Retrieval-Augmented Generation (RAG) engine, a community ecosystem, and a local multi-agent architecture.
 
