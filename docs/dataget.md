@@ -42,6 +42,7 @@ workspace.aura
 |------|-------|------|-------------|
 | 1 | `core_matrix` | 48,094 | Unified patient features (CBC, inflammatory markers, demographics, diagnoses) |
 | 1 | `patient_reported_outcomes` | 5,025,070 | Daily symptom/treatment/trigger tracking from Flaredown (~1,700 patients) |
+| 1 | `pmc_patients` | 250,294 | Clinical case reports from PubMed Central (210K papers, 1986-2024) |
 | 2 | `autoantibody_panel` | 12,085 | Autoantibody test results (ANA, anti-dsDNA, HLA-B27, etc.) |
 | 2 | `longitudinal_labs` | 19,646 | Time-series lab results from ICU patients |
 | 2 | `genetic_risk_scores` | 69,889 | GWAS significant hits from FinnGen R12 + HugeAmp |
@@ -314,6 +315,31 @@ FROM workspace.aura.patient_reported_outcomes
 WHERE symptom IS NOT NULL
 GROUP BY diagnosis_cluster, symptom
 ORDER BY reports DESC
+LIMIT 20;
+```
+
+---
+
+## Tier 1: pmc_patients
+
+Clinical case reports from PubMed Central (250,294 patient summaries from 210K papers). Full physician-written clinical narratives with demographics. Not joinable to `core_matrix` by `patient_id` (different patient populations).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `patient_id` | string | Unique patient identifier from PMC-Patients |
+| `patient_uid` | string | Unique patient UID |
+| `pmid` | string | PubMed ID of the source paper |
+| `title` | string | Paper title |
+| `patient_summary` | string | Full clinical narrative (avg ~2,800 chars) |
+| `age_years` | double | Patient age in years (0-120, null if unknown) |
+| `sex` | string | `male`, `female` (130K/119K) |
+| `pub_date` | timestamp | Publication date (1986-2024) |
+
+```sql
+-- Search for autoimmune case reports
+SELECT patient_id, title, age_years, sex, pub_date
+FROM workspace.aura.pmc_patients
+WHERE LOWER(patient_summary) LIKE '%rheumatoid arthritis%'
 LIMIT 20;
 ```
 
@@ -730,6 +756,7 @@ LIMIT 20;
 /Volumes/workspace/aura/aura_data/
   tier1_core_matrix.parquet
   tier1_patient_reported_outcomes.parquet
+  tier1_pmc_patients.parquet
   tier2_autoantibody_panel.parquet
   tier2_longitudinal_labs.parquet
   tier2_genetic_risk_scores.parquet
@@ -767,6 +794,7 @@ LIMIT 20;
     hpa/              -- Human Protein Atlas (TSV)
     mendeley/         -- Mendeley mouse lipidomics (CSV)
     flaredown/        -- Flaredown patient export (CSV)
+    pmc_patients/     -- PMC-Patients v2 (parquet from HuggingFace)
 ```
 
 ---
@@ -794,6 +822,7 @@ LIMIT 20;
 | Human Protein Atlas v25 | CC BY-SA | 20,162 | TSV download (autoimmune filtered from 20K genes) |
 | Mendeley Data (mouse lipidomics) | CC BY-NC-SA | 1,612 | CSV download (EAE model) |
 | Flaredown (patient tracker) | Open Data | 5,025,070 | CSV export |
+| PMC-Patients v2 (HuggingFace) | CC BY-NC-SA | 250,294 | Parquet download via Azure VM |
 
 ---
 
