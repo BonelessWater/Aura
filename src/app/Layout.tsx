@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from "react-router";
 import { Background } from "./components/layout/Background";
 import { Navbar } from "./components/layout/Navbar";
-import { BoneScrollbar } from "./components/layout/BoneScrollbar";
 
 export const Layout = () => {
   const location = useLocation();
@@ -11,7 +10,6 @@ export const Layout = () => {
   return (
     <>
       {!isClinicianPortal && <Background />}
-      {!isClinicianPortal && <BoneScrollbar />}
       <Outlet />
     </>
   );

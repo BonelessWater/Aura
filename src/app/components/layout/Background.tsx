@@ -1,194 +1,111 @@
-import React, { useEffect, useRef } from 'react';
-import { motion, useMotionTemplate, useMotionValue } from 'motion/react';
+import React, { useRef, useMemo, useEffect } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { motion, useMotionTemplate, useMotionValue } from "motion/react";
+import * as THREE from "three";
+import { Sparkles } from "@react-three/drei";
+
+const BloodCells = ({ count = 120 }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+
+  const cells = useMemo(() => {
+    const temp = [];
+    for (let i = 0; i < count; i++) {
+      const zDepth = (Math.random() - 0.5) * 50 - 5;
+      temp.push({
+        startPos: [
+          (Math.random() - 0.5) * 60,
+          (Math.random() - 0.5) * 50,
+          zDepth,
+        ],
+        rotation: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI],
+        scale: 0.6 + Math.random() * 0.8,
+        speed: 0.005 + Math.random() * 0.015,
+        offsetX: Math.random() * 100,
+        offsetY: Math.random() * 100,
+        offsetZ: Math.random() * 100,
+      });
+    }
+    return temp;
+  }, [count]);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    const time = state.clock.elapsedTime;
+
+    cells.forEach((cell, i) => {
+      const x = cell.startPos[0] + Math.sin(time * cell.speed * 2 + cell.offsetX) * 4;
+      const y = cell.startPos[1] + Math.cos(time * cell.speed * 1.5 + cell.offsetY) * 3 + (time * 0.5);
+      const z = cell.startPos[2] + Math.sin(time * cell.speed * 1 + cell.offsetZ) * 2;
+
+      dummy.position.set(x, y % 30 < 15 ? y : y - 60, z);
+
+      dummy.rotation.set(
+        cell.rotation[0] + time * cell.speed,
+        cell.rotation[1] + time * cell.speed * 1.2,
+        cell.rotation[2] + time * cell.speed * 0.8
+      );
+
+      dummy.scale.set(cell.scale, cell.scale, cell.scale * 0.35);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count] as any}>
+      <torusGeometry args={[0.5, 0.45, 64, 64]} />
+      <meshPhysicalMaterial
+        color="#8c0716"
+        emissive="#1a0002"
+        roughness={0.25}
+        metalness={0.0}
+        clearcoat={0.6}
+        clearcoatRoughness={0.1}
+        transmission={0.3}
+        thickness={1.5}
+      />
+    </instancedMesh>
+  );
+};
 
 export const Background = () => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    let animId = 0;
-
-    interface Cell {
-      x: number; y: number; vx: number; vy: number;
-      r: number; alpha: number; depth: number; seed: number;
-      rx: number; ry: number; rz: number;
-      rxV: number; ryV: number; rzV: number;
-      bumpVx: number; bumpVy: number;
-    }
-
-    const cells: Cell[] = [];
-    const cellCount = 55;
-
-    for (let i = 0; i < cellCount; i++) {
-      const depth = 0.4 + Math.random() * 0.6;
-      cells.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (0.3 + Math.random() * 0.7) * depth,
-        vy: (Math.random() - 0.5) * 0.3,
-        r: 24 + Math.random() * 16,
-        alpha: 0.35 + Math.random() * 0.20,
-        depth, seed: Math.random() * 1000,
-        rx: Math.random() * Math.PI * 2,
-        ry: Math.random() * Math.PI * 2,
-        rz: Math.random() * Math.PI * 2,
-        rxV: 0, ryV: 0, rzV: 0,
-        bumpVx: 0, bumpVy: 0,
-      });
-    }
-
-    const lightDir = { x: -0.5, y: -0.6, z: 0.6 };
-    const lightMag = Math.sqrt(lightDir.x ** 2 + lightDir.y ** 2 + lightDir.z ** 2);
-    lightDir.x /= lightMag; lightDir.y /= lightMag; lightDir.z /= lightMag;
-
-    const drawCell = (c: Cell) => {
-      ctx.save();
-      ctx.translate(c.x, c.y);
-
-      const r = c.r * c.depth;
-      const a = c.alpha;
-      const cosRx = Math.cos(c.rx), sinRx = Math.sin(c.rx);
-      const cosRy = Math.cos(c.ry), sinRy = Math.sin(c.ry);
-      const nx = sinRy, ny = -sinRx * cosRy, nz = cosRx * cosRy;
-
-      const diffuse = Math.max(0, nx * lightDir.x + ny * lightDir.y + nz * lightDir.z);
-      const faceDot = Math.abs(nz);
-      const rimLight = Math.pow(1 - faceDot, 2.5) * 0.6;
-
-      const scaleX = Math.max(0.12, Math.abs(cosRy) * 0.88 + 0.12);
-      const scaleY = Math.max(0.12, Math.abs(cosRx) * 0.88 + 0.12);
-
-      ctx.rotate(c.rz);
-      ctx.scale(scaleX, scaleY);
-
-      const edgeFactor = scaleX * scaleY;
-      const effectiveAlpha = a * (0.35 + edgeFactor * 0.65);
-      const litAlpha = effectiveAlpha * (0.6 + diffuse * 0.4);
-
-      // Drop shadow
-      const shadowGrad = ctx.createRadialGradient(r * 0.15, r * 0.2, 0, r * 0.15, r * 0.2, r * 1.3);
-      shadowGrad.addColorStop(0, `rgba(0, 0, 0, ${litAlpha * 0.35})`);
-      shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.beginPath(); ctx.arc(r * 0.15, r * 0.2, r * 1.3, 0, Math.PI * 2);
-      ctx.fillStyle = shadowGrad; ctx.fill();
-
-      // Ambient glow
-      const glow = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 1.8);
-      glow.addColorStop(0, `rgba(220, 40, 40, ${litAlpha * 0.35})`);
-      glow.addColorStop(1, 'rgba(220, 40, 40, 0)');
-      ctx.beginPath(); ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2); ctx.fillStyle = glow; ctx.fill();
-
-      // Main disc — heavy 3D shading
-      const bb = 0.8 + diffuse * 0.4;
-      const outerGrad = ctx.createRadialGradient(0, 0, r * 0.15, 0, 0, r * 1.05);
-      outerGrad.addColorStop(0.0, `rgba(50, 5, 5, ${litAlpha * 0.8})`);
-      outerGrad.addColorStop(0.3, `rgba(180, 30, 30, ${litAlpha * 0.85 * bb})`);
-      outerGrad.addColorStop(0.55, `rgba(230, 60, 50, ${litAlpha * 1.1 * bb})`);
-      outerGrad.addColorStop(0.85, `rgba(180, 30, 30, ${litAlpha * 0.9 * bb})`);
-      outerGrad.addColorStop(1.0, `rgba(30, 3, 3, ${litAlpha * 0.95})`);
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = outerGrad; ctx.fill();
-
-      // Ambient occlusion
-      const aoGrad = ctx.createRadialGradient(0, 0, r * 0.45, 0, 0, r * 0.85);
-      aoGrad.addColorStop(0, 'rgba(5, 5, 10, 0)');
-      aoGrad.addColorStop(0.5, `rgba(10, 2, 2, ${litAlpha * 0.4})`);
-      aoGrad.addColorStop(1, 'rgba(5, 5, 10, 0)');
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = aoGrad; ctx.fill();
-
-      // Membrane outline
-      ctx.strokeStyle = `rgba(190, 35, 30, ${litAlpha * (0.8 + diffuse * 0.5)})`;
-      ctx.lineWidth = 1.5; ctx.stroke();
-
-      // Rim lighting
-      if (rimLight > 0.05) {
-        const rimGrad = ctx.createRadialGradient(0, 0, r * 0.9, 0, 0, r * 1.15);
-        rimGrad.addColorStop(0, 'rgba(0,0,0,0)');
-        rimGrad.addColorStop(0.5, `rgba(240, 70, 55, ${rimLight * litAlpha * 0.85})`);
-        rimGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.beginPath(); ctx.arc(0, 0, r * 1.15, 0, Math.PI * 2); ctx.fillStyle = rimGrad; ctx.fill();
-      }
-
-      // Central depression (dark hole)
-      const centerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.45);
-      centerGrad.addColorStop(0, `rgba(2, 1, 1, ${litAlpha * 0.9})`);
-      centerGrad.addColorStop(0.6, `rgba(60, 6, 6, ${litAlpha * 0.5})`);
-      centerGrad.addColorStop(1, 'rgba(200, 45, 40, 0)');
-      ctx.beginPath(); ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2); ctx.fillStyle = centerGrad; ctx.fill();
-
-      // Specular highlight
-      const hlOffX = -r * 0.3 + sinRy * r * 0.15;
-      const hlOffY = -r * 0.25 + sinRx * r * 0.12;
-      const specIntensity = Math.pow(diffuse, 1.2);
-      ctx.beginPath(); ctx.ellipse(hlOffX, hlOffY, r * 0.22, r * 0.11, -0.6, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 180, 170, ${litAlpha * (0.4 + specIntensity * 0.55)})`; ctx.fill();
-
-      // Hot white pinpoint
-      ctx.beginPath(); ctx.ellipse(hlOffX + r * 0.06, hlOffY + r * 0.03, r * 0.07, r * 0.04, -0.4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${litAlpha * (0.6 + specIntensity * 0.4)})`; ctx.fill();
-
-      ctx.restore();
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
     };
-
-    const animate = (timestamp: number) => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#05070A';
-      ctx.fillRect(0, 0, width, height);
-
-      cells.sort((a, b) => a.depth - b.depth);
-
-      for (const c of cells) {
-        const flowY = Math.sin(timestamp * 0.0005 + c.seed) * 0.3;
-        c.x += (c.vx + c.bumpVx) * c.depth;
-        c.y += (c.vy + flowY + c.bumpVy) * c.depth;
-        c.bumpVx *= 0.95; c.bumpVy *= 0.95;
-        if (c.x > width + 100) c.x = -100;
-        if (c.y > height + 100) c.y = -100;
-        if (c.y < -100) c.y = height + 100;
-
-        if (Math.random() < 0.005) {
-          c.rxV += (Math.random() - 0.5) * 0.02;
-          c.ryV += (Math.random() - 0.5) * 0.02;
-        }
-        c.rx += c.rxV; c.ry += c.ryV; c.rz += c.rzV;
-        c.rxV *= 0.98; c.ryV *= 0.98; c.rzV *= 0.98;
-
-        drawCell(c);
-      }
-      animId = requestAnimationFrame(animate);
-    };
-
-    animId = requestAnimationFrame(animate);
-
-    const handleResize = () => { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; };
-    window.addEventListener('resize', handleResize);
-    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', handleResize); };
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => { mouseX.set(e.clientX); mouseY.set(e.clientY); };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [mouseX, mouseY]);
 
-  const bgGradient = useMotionTemplate`radial-gradient(900px circle at ${mouseX}px ${mouseY}px, rgba(200, 50, 50, 0.04), transparent 40%)`;
+  const bgGradient = useMotionTemplate`radial-gradient(900px circle at ${mouseX}px ${mouseY}px, rgba(220, 40, 40, 0.07), transparent 40%)`;
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-[#0A0D14]">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(10,13,20,0.9)_100%)]" />
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-[#020005]">
+      <div className="absolute inset-0 opacity-80" style={{ filter: "contrast(1.1) saturate(1.2)" }}>
+        <Canvas camera={{ position: [0, 0, 15], fov: 45 }}>
+          <fog attach="fog" args={["#020005", 10, 35]} />
+          <ambientLight intensity={0.1} color="#ffffff" />
+          <directionalLight position={[-10, 10, 10]} intensity={3} color="#ffebe6" />
+          <pointLight position={[10, -10, -5]} intensity={2.5} color="#450012" />
+          <pointLight position={[0, 0, 5]} intensity={1.5} color="#10051a" />
+          <BloodCells count={150} />
+          <Sparkles count={300} scale={30} size={1.5} speed={0.4} opacity={0.15} color="#ffb3b3" />
+        </Canvas>
       </div>
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none opacity-60" style={{ filter: 'blur(1.5px)' }} />
-      <motion.div className="absolute inset-0 pointer-events-none" style={{ background: bgGradient }} />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-[150px] bg-gradient-to-b from-[#020005] to-transparent opacity-90" />
+        <div className="absolute bottom-0 left-0 w-full h-[200px] bg-gradient-to-t from-[#0A0D14] to-transparent opacity-100" />
+      </div>
+      <motion.div
+        className="absolute inset-0 pointer-events-none mix-blend-screen"
+        style={{ background: bgGradient }}
+      />
     </div>
   );
 };

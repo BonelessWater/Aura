@@ -1,42 +1,16 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router';
 import { Button } from '../ui/Button';
+// Icons removed — trust chips no longer shown
 
 export const Hero = ({ onStart }: { onStart: () => void }) => {
-  const navigate = useNavigate();
-
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center px-4 md:px-12 max-w-[1400px] mx-auto overflow-hidden">
-
-      {/* AuRA Title — top center */}
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="font-display text-6xl md:text-8xl font-bold tracking-[0.06em] leading-none text-center absolute top-5 left-0 right-0 z-20"
-      >
-        {['A', 'u', 'R', 'A'].map((letter, i) => (
-          <motion.span
-            key={i}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: i * 0.1, ease: 'easeOut' }}
-            className={letter === 'u' ? 'text-white/50' : 'text-white'}
-            style={{
-              textShadow: '0 0 40px rgba(140, 7, 22, 0.6), 0 0 80px rgba(140, 7, 22, 0.25)',
-            }}
-          >
-            {letter}
-          </motion.span>
-        ))}
-      </motion.h1>
-
+    <section className="relative min-h-screen flex items-center justify-center px-4 md:px-12 max-w-[1400px] mx-auto overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 w-full pt-20">
-
+        
         {/* Left Content */}
         <div className="lg:col-span-3 flex flex-col justify-center space-y-8 z-10">
-
+          
           {/* Tag */}
           <div className="flex items-center space-x-2 text-[#3ECFCF] font-mono text-sm tracking-widest uppercase">
             <span>Private. Local. Cited.</span>
@@ -63,7 +37,7 @@ export const Hero = ({ onStart }: { onStart: () => void }) => {
           </h1>
 
           {/* Subcopy */}
-          <motion.p
+          <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
@@ -77,20 +51,20 @@ export const Hero = ({ onStart }: { onStart: () => void }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1 }}
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-4"
           >
-            <Button
-              onClick={() => navigate('/login')}
-              className="h-[52px] px-10 text-lg bg-[#8c0716] hover:bg-[#a8091c] text-white font-medium shadow-[0_0_20px_rgba(140,7,22,0.4)] hover:shadow-[0_0_30px_rgba(140,7,22,0.6)] transition-all"
+            <Button 
+              onClick={onStart} 
+              className="h-[52px] px-8 text-lg bg-[#00B4D8] hover:bg-[#0096B7] text-white shadow-[0_0_20px_rgba(0,180,216,0.35)] hover:shadow-[0_0_28px_rgba(0,180,216,0.5)] transition-all"
             >
-              Get Started
+              Upload My Labs
             </Button>
           </motion.div>
         </div>
 
         {/* Right Content — Chibi Neon Doctor Character */}
         <div className="lg:col-span-2 relative h-[500px] flex items-center justify-center">
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.5 }}
