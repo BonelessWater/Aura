@@ -326,14 +326,6 @@ export const Present = () => {
         style={{ scaleX, background: 'linear-gradient(90deg, #7B61FF, #3ECFCF)' }}
       />
 
-      {/* Pulsoid heart rate widget */}
-      <iframe
-        src="https://pulsoid.net/widget/view/41ec10fc-556a-40e4-99f8-49776c9a8498"
-        className="fixed top-4 right-4 z-[199]"
-        style={{ width: 150, height: 80, border: 'none', background: 'transparent' }}
-        title="Heart Rate"
-        allow="fullscreen"
-      />
 
       {/* Section navigation dots */}
       <SectionNav />
@@ -499,7 +491,86 @@ export const Present = () => {
 
       <Divider />
 
-      {/* ── 3. THE DATASET ───────────────────────────────────────────────── */}
+      {/* ── 3. THE MODEL ─────────────────────────────────────────────────── */}
+      <section id="s-model" className="py-32 px-6">
+        <div className="max-w-6xl mx-auto w-full">
+
+          <FadeIn className="text-center mb-8">
+            <SectionLabel>The Solution</SectionLabel>
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
+              A hierarchical XGBoost pipeline that{' '}
+              <span className="bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] bg-clip-text text-transparent">
+                sees what doctors miss.
+              </span>
+            </h2>
+            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto">
+              Trained on 48K patients, ingesting routine labs every patient already has.
+            </p>
+          </FadeIn>
+
+          {/* Pipeline */}
+          <FadeIn delay={0.05} className="mb-16">
+            <PipelineVisual />
+          </FadeIn>
+
+          {/* AUC score cards — prominent Apple-style row */}
+          <FadeIn delay={0.1} className="mb-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Systemic AUC', val: '0.963', color: '#7B61FF' },
+                { label: 'Healthy AUC', val: '0.933', color: '#52D0A0' },
+                { label: 'Endocrine AUC', val: '0.880', color: '#F4A261' },
+                { label: 'Macro AUC', val: '0.897', color: '#3ECFCF' },
+              ].map((m, i) => (
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col items-center py-7 px-4 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                  style={{ borderColor: `${m.color}35`, background: `${m.color}0D` }}
+                >
+                  <div
+                    className="absolute top-0 left-4 right-4 h-[2px] rounded-full"
+                    style={{ background: m.color }}
+                  />
+                  <span className="font-display text-4xl font-semibold tracking-[0.04em] mb-1.5" style={{ color: m.color }}>{m.val}</span>
+                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{m.label}</span>
+                </motion.div>
+              ))}
+            </div>
+          </FadeIn>
+
+          {/* Feature importance + ROC side by side */}
+          <div className="grid md:grid-cols-2 gap-8 mb-10">
+            <FadeIn delay={0.1}>
+              <ChartCard
+                src="/figures/08_feature_importance.png"
+                caption="Feature importance (gain): CRP and ESR dominate, confirming inflammation markers as key signals"
+              />
+            </FadeIn>
+            <FadeIn delay={0.18}>
+              <ChartCard
+                src="/figures/07_roc_curves.png"
+                caption="ROC curves by disease cluster: Systemic AUC 0.963, Healthy AUC 0.933"
+              />
+            </FadeIn>
+          </div>
+
+          {/* Model comparison */}
+          <FadeIn delay={0.1}>
+            <WideChartCard
+              src="/figures/04_model_comparison.png"
+              caption="Model comparison: XGBoost leads with macro AUC 0.897 across LR, LightGBM, Random Forest, and CatBoost"
+            />
+          </FadeIn>
+        </div>
+      </section>
+
+      <Divider />
+
+      {/* ── 4. THE DATASET ───────────────────────────────────────────────── */}
       <section id="s-dataset" className="py-32 px-6">
         <div className="max-w-6xl mx-auto w-full">
 
@@ -585,85 +656,6 @@ export const Present = () => {
             <WideChartCard
               src="/figures/01_demographics.png"
               caption="48,503 patients across 4 disease clusters: age and sex breakdown"
-            />
-          </FadeIn>
-        </div>
-      </section>
-
-      <Divider />
-
-      {/* ── 4. THE MODEL ─────────────────────────────────────────────────── */}
-      <section id="s-model" className="py-32 px-6">
-        <div className="max-w-6xl mx-auto w-full">
-
-          <FadeIn className="text-center mb-8">
-            <SectionLabel>The Solution</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
-              A hierarchical XGBoost pipeline that{' '}
-              <span className="bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] bg-clip-text text-transparent">
-                sees what doctors miss.
-              </span>
-            </h2>
-            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto">
-              Trained on 48K patients, ingesting routine labs every patient already has.
-            </p>
-          </FadeIn>
-
-          {/* Pipeline */}
-          <FadeIn delay={0.05} className="mb-16">
-            <PipelineVisual />
-          </FadeIn>
-
-          {/* AUC score cards — prominent Apple-style row */}
-          <FadeIn delay={0.1} className="mb-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Systemic AUC', val: '0.963', color: '#7B61FF' },
-                { label: 'Healthy AUC', val: '0.933', color: '#52D0A0' },
-                { label: 'Endocrine AUC', val: '0.880', color: '#F4A261' },
-                { label: 'Macro AUC', val: '0.897', color: '#3ECFCF' },
-              ].map((m, i) => (
-                <motion.div
-                  key={m.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex flex-col items-center py-7 px-4 rounded-2xl border backdrop-blur-md relative overflow-hidden"
-                  style={{ borderColor: `${m.color}35`, background: `${m.color}0D` }}
-                >
-                  <div
-                    className="absolute top-0 left-4 right-4 h-[2px] rounded-full"
-                    style={{ background: m.color }}
-                  />
-                  <span className="font-display text-4xl font-semibold tracking-[0.04em] mb-1.5" style={{ color: m.color }}>{m.val}</span>
-                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{m.label}</span>
-                </motion.div>
-              ))}
-            </div>
-          </FadeIn>
-
-          {/* Feature importance + ROC side by side */}
-          <div className="grid md:grid-cols-2 gap-8 mb-10">
-            <FadeIn delay={0.1}>
-              <ChartCard
-                src="/figures/08_feature_importance.png"
-                caption="Feature importance (gain): CRP and ESR dominate, confirming inflammation markers as key signals"
-              />
-            </FadeIn>
-            <FadeIn delay={0.18}>
-              <ChartCard
-                src="/figures/07_roc_curves.png"
-                caption="ROC curves by disease cluster: Systemic AUC 0.963, Healthy AUC 0.933"
-              />
-            </FadeIn>
-          </div>
-
-          {/* Model comparison */}
-          <FadeIn delay={0.1}>
-            <WideChartCard
-              src="/figures/04_model_comparison.png"
-              caption="Model comparison: XGBoost leads with macro AUC 0.897 across LR, LightGBM, Random Forest, and CatBoost"
             />
           </FadeIn>
         </div>
