@@ -5,6 +5,7 @@ import { Login } from "./views/Login";
 import { DashboardPage } from "./views/DashboardPage";
 import { Vault } from "./views/Vault";
 import { ClinicianPortal } from "./views/ClinicianPortal";
+import { Present } from "./views/Present";
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
       {
         path: "clinician",
         Component: ClinicianPortal,
+      },
+      {
+        path: "present",
+        Component: Present,
       },
     ],
   },
