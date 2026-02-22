@@ -11,6 +11,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { useNavigate } from 'react-router';
 import { DailyNotes } from './DailyNotes';
 import { DoctorHoverHelper } from './DoctorHoverHelper';
+import { AppleWatchPanel } from './AppleWatchPanel';
 
 interface ResultsDashboardProps {
   onViewSOAP: () => void;
@@ -90,7 +91,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
   useEffect(() => {
     const container = mainRef.current;
     if (!container) return;
-    const sections = ['scores', 'translation', 'next-steps', 'daily-notes'];
+    const sections = ['scores', 'translation', 'next-steps', 'daily-notes', 'patient-data'];
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -113,6 +114,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
     { id: 'translation', icon: Compass, label: "Translation", scrollTo: 'translation' },
     { id: 'next-steps', icon: MessageSquare, label: "Next Steps", scrollTo: 'next-steps' },
     { id: 'daily-notes', icon: BookOpen, label: "Daily Notes", scrollTo: 'daily-notes' },
+    { id: 'patient-data', icon: BarChart3, label: "Patient Data", scrollTo: 'patient-data' },
     { id: 'soap', icon: FileText, label: "SOAP Note", onClick: onViewSOAP },
     { id: 'specialists', icon: MapPin, label: "Specialists", onClick: onViewSpecialists },
     { id: 'community', icon: Users, label: "Community", onClick: onViewCommunity },
@@ -298,6 +300,21 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
               className="bg-[#13161F] border border-[#2A2E3B] rounded-2xl p-8"
             >
               <DailyNotes />
+            </motion.div>
+
+            {/* Patient Data — Apple Watch */}
+            <motion.div
+              id="patient-data"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="bg-[#13161F] border border-[#2A2E3B] rounded-2xl p-8"
+            >
+              <h3 className="text-lg font-medium text-[#F0F2F8] mb-6 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-[#E07070]" />
+                Patient Data
+              </h3>
+              <AppleWatchPanel />
             </motion.div>
 
           </div>

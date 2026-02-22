@@ -256,6 +256,15 @@ export const Present = () => {
         style={{ scaleX, background: 'linear-gradient(90deg, #7B61FF, #3ECFCF)' }}
       />
 
+      {/* Pulsoid heart rate widget */}
+      <iframe
+        src="https://pulsoid.net/widget/view/41ec10fc-556a-40e4-99f8-49776c9a8498"
+        className="fixed top-4 right-4 z-[199]"
+        style={{ width: 150, height: 80, border: 'none', background: 'transparent' }}
+        title="Heart Rate"
+        allow="fullscreen"
+      />
+
       {/* ── 1. HERO ──────────────────────────────────────────────────────── */}
       <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
