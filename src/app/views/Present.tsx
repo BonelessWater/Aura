@@ -234,6 +234,80 @@ function PipelineVisual() {
   );
 }
 
+// ─── Section Nav Dots (Apple-style right rail) ───────────────────────────────
+const NAV_SECTIONS = [
+  { id: 's-hero',      label: 'Overview' },
+  { id: 's-problem',   label: 'The Problem' },
+  { id: 's-dataset',   label: 'Data' },
+  { id: 's-model',     label: 'The Model' },
+  { id: 's-early',     label: 'Early Detection' },
+  { id: 's-impact',    label: 'Impact' },
+  { id: 's-explore',   label: 'Exploration' },
+  { id: 's-cta',       label: 'Wrap-up' },
+];
+
+function SectionNav() {
+  const [active, setActive] = useState('s-hero');
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    NAV_SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActive(id); },
+        { threshold: 0.35 },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
+  return (
+    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-[300] hidden lg:flex flex-col gap-3 items-end">
+      {NAV_SECTIONS.map(({ id, label }) => (
+        <button
+          key={id}
+          onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })}
+          onMouseEnter={() => setHovered(id)}
+          onMouseLeave={() => setHovered(null)}
+          className="flex items-center gap-2 group"
+        >
+          <motion.span
+            animate={{ opacity: hovered === id ? 1 : 0, x: hovered === id ? 0 : 6 }}
+            className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase whitespace-nowrap"
+          >
+            {label}
+          </motion.span>
+          <motion.div
+            animate={{
+              width: active === id ? 20 : 6,
+              backgroundColor: active === id ? '#7B61FF' : '#3A3D52',
+            }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="h-[6px] rounded-full flex-shrink-0"
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Apple-style glass stat pill ─────────────────────────────────────────────
+function StatPill({ value, label, color }: { value: string; label: string; color: string }) {
+  return (
+    <div
+      className="flex flex-col items-center px-6 py-4 rounded-2xl border bg-white/[0.04] backdrop-blur-xl"
+      style={{ borderColor: `${color}20` }}
+    >
+      <span className="font-display text-3xl md:text-4xl font-light" style={{ color }}>{value}</span>
+      <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase mt-1 text-center">{label}</span>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export const Present = () => {
   const { scrollYProgress } = useScroll();
@@ -261,49 +335,84 @@ export const Present = () => {
         allow="fullscreen"
       />
 
+      {/* Section navigation dots */}
+      <SectionNav />
+
       <div className="relative z-[2]">
+
       {/* ── 1. HERO ──────────────────────────────────────────────────────── */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center relative overflow-hidden">
+      <section id="s-hero" className="min-h-screen flex flex-col items-center justify-center px-6 pt-28 pb-20 text-center relative overflow-hidden">
+        {/* Ambient glow */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(123,97,255,0.08) 0%, transparent 70%)',
-          filter: 'blur(30px)',
+          background: 'radial-gradient(ellipse 70% 55% at 50% 38%, rgba(123,97,255,0.10) 0%, transparent 70%)',
         }} />
-        <FadeIn className="relative z-10 max-w-4xl">
-          <SectionLabel>Golden Byte 2026 · Aura</SectionLabel>
-          <h1 className="font-display text-6xl md:text-8xl font-light tracking-tight mb-6 leading-none">
+
+        <FadeIn className="relative z-10 max-w-4xl w-full">
+          {/* Event tag */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl mb-8">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#3ECFCF] animate-pulse" />
+            <span className="text-xs font-mono tracking-widest text-[#8A93B2] uppercase">Golden Byte 2026 · Aura</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="font-display text-7xl md:text-9xl font-light tracking-tight mb-8 leading-[0.92]">
             The{' '}
-            <span className="bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#7B61FF] via-[#9B7FFF] to-[#3ECFCF] bg-clip-text text-transparent">
               4-Year Wait.
             </span>
-            <br />Ends Now.
+            <br />
+            <span className="text-[#F0F2F8]/90">Ends Now.</span>
           </h1>
-          <p className="text-lg md:text-xl text-[#8A93B2] max-w-2xl mx-auto leading-relaxed mb-10">
-            Autoimmune diseases affect <span className="text-[#F0F2F8]">50 million Americans</span>, yet the
-            average patient waits <span className="text-[#F0F2F8]">4–7 years</span> and sees{' '}
-            <span className="text-[#F0F2F8]">4–6 doctors</span> before a correct diagnosis.
-            Aura changes that with AI and routine labs.
+
+          {/* Sub-copy */}
+          <p className="text-lg md:text-xl text-[#8A93B2] max-w-xl mx-auto leading-relaxed mb-12">
+            Autoimmune diseases affect{' '}
+            <span className="text-[#F0F2F8] font-medium">50 million Americans</span>, yet the
+            average patient waits{' '}
+            <span className="text-[#F0F2F8] font-medium">4–7 years</span> and sees{' '}
+            <span className="text-[#F0F2F8] font-medium">4–6 doctors</span> before a correct diagnosis.
           </p>
+
+          {/* Hero stat row */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-wrap justify-center gap-3 mb-14"
+          >
+            <StatPill value="50M" label="Americans affected" color="#7B61FF" />
+            <StatPill value="4–7 yr" label="Avg diagnostic delay" color="#3ECFCF" />
+            <StatPill value="0.897" label="Model AUC" color="#52D0A0" />
+            <StatPill value="$2K+" label="Saved per patient" color="#F4A261" />
+          </motion.div>
+
+          {/* Hero image */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.93, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="relative inline-block"
           >
             <div className="absolute inset-0 rounded-3xl" style={{
-              background: 'radial-gradient(ellipse at 50% 80%, rgba(123,97,255,0.25) 0%, transparent 60%)'
+              background: 'radial-gradient(ellipse at 50% 80%, rgba(123,97,255,0.28) 0%, transparent 65%)',
             }} />
-            <img src="/assets/doctor-hero-neon.png" alt="Aura clinical AI"
-              className="relative w-64 md:w-80 mx-auto object-contain drop-shadow-2xl" />
+            <img
+              src="/assets/doctor-hero-neon.png"
+              alt="Aura clinical AI"
+              className="relative w-60 md:w-72 mx-auto object-contain drop-shadow-2xl"
+            />
           </motion.div>
         </FadeIn>
+
+        {/* Scroll cue */}
         <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[#8A93B2] text-xs tracking-widest uppercase"
-          animate={{ y: [0, 6, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#8A93B2]/60"
+          animate={{ y: [0, 7, 0] }}
+          transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
         >
-          <span>Scroll</span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <span className="text-[10px] font-mono tracking-widest uppercase">Scroll</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 2v10M2 7l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </motion.div>
       </section>
@@ -311,89 +420,167 @@ export const Present = () => {
       <Divider />
 
       {/* ── 2. THE PROBLEM ───────────────────────────────────────────────── */}
-      <section className="min-h-screen flex items-center px-6 py-24">
-        <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
-          <FadeIn>
+      <section id="s-problem" className="py-32 px-6">
+        <div className="max-w-6xl mx-auto w-full">
+          {/* Section header — centered */}
+          <FadeIn className="text-center mb-20">
             <SectionLabel>The Problem</SectionLabel>
-            <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
+            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto">
               Millions living with{' '}
-              <span className="text-[#7B61FF]">undiagnosed</span>{' '}
+              <span style={{ background: 'linear-gradient(90deg,#7B61FF,#9B80FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                undiagnosed
+              </span>{' '}
               autoimmune disease.
             </h2>
-            <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
-              The immune system attacks the body's own tissues. Symptoms overlap dozens of conditions
-              and are often dismissed — making early clinical diagnosis extraordinarily difficult
-              without the right tools.
-            </p>
-            <div className="space-y-3">
-              {[
-                { icon: '⏱', text: '4–7 year average diagnostic delay' },
-                { icon: '🏥', text: '4–6 specialists seen before diagnosis' },
-                { icon: '💊', text: 'Years of inappropriate or no treatment' },
-                { icon: '🧠', text: 'Irreversible organ damage accumulates in delays' },
-              ].map((item) => (
-                <div key={item.text} className="flex items-center gap-3 text-[#F0F2F8]/80">
-                  <span className="text-lg">{item.icon}</span>
-                  <span>{item.text}</span>
-                </div>
-              ))}
-            </div>
           </FadeIn>
 
-          <FadeIn delay={0.15}>
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              <StatCounter value={50} suffix="M" label="Americans affected" color="#7B61FF" duration={1600} />
-              <StatCounter value={7} prefix="Up to " suffix=" yrs" label="Diagnostic delay" color="#3ECFCF" duration={1200} />
-              <StatCounter value={6} prefix="Up to " label="Doctors visited" color="#F4A261" duration={1200} />
-              <StatCounter value={100} suffix="B+" prefix="$" label="Annual cost burden" color="#52D0A0" duration={1800} />
-            </div>
-            <div className="p-4 rounded-xl border border-[#7B61FF]/15 bg-[#13161F]/65 backdrop-blur-md">
-              <p className="text-[#8A93B2] text-sm leading-relaxed text-center italic">
-                "Autoimmune diseases are notoriously hard to diagnose. Patients spend years being told their symptoms are in their head."
+          {/* Two-column body */}
+          <div className="grid md:grid-cols-2 gap-12 items-stretch">
+
+            {/* Left — copy + list */}
+            <FadeIn>
+              <p className="text-[#8A93B2] text-lg leading-relaxed mb-10">
+                The immune system attacks the body's own tissues. Symptoms overlap dozens of
+                conditions and are often dismissed — making early clinical diagnosis extraordinarily
+                difficult without the right tools.
               </p>
-              <p className="text-[#7B61FF] text-xs text-center mt-2">— AARDA, 2023</p>
-            </div>
-          </FadeIn>
+
+              {/* Clean indicator list — no emojis */}
+              <div className="space-y-4">
+                {[
+                  { text: '4–7 year average diagnostic delay', color: '#E07070' },
+                  { text: '4–6 specialists seen before diagnosis', color: '#F4A261' },
+                  { text: 'Years of inappropriate or no treatment', color: '#7B61FF' },
+                  { text: 'Irreversible organ damage accumulates in delays', color: '#3ECFCF' },
+                ].map((item) => (
+                  <div
+                    key={item.text}
+                    className="flex items-center gap-4 px-5 py-4 rounded-xl border border-white/5 bg-white/[0.03] backdrop-blur-sm"
+                  >
+                    <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                    <span className="text-[#F0F2F8]/85 text-sm leading-snug">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+
+            {/* Right — stat grid + quote */}
+            <FadeIn delay={0.12}>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {[
+                  { value: 50, suffix: 'M', label: 'Americans affected', color: '#7B61FF', duration: 1600 },
+                  { value: 7, prefix: 'Up to ', suffix: ' yrs', label: 'Diagnostic delay', color: '#3ECFCF', duration: 1200 },
+                  { value: 6, prefix: 'Up to ', label: 'Doctors visited', color: '#F4A261', duration: 1200 },
+                  { value: 100, suffix: 'B+', prefix: '$', label: 'Annual cost burden', color: '#52D0A0', duration: 1800 },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="flex flex-col items-center justify-center py-6 px-4 rounded-2xl border bg-white/[0.035] backdrop-blur-xl"
+                    style={{ borderColor: `${s.color}20` }}
+                  >
+                    <StatCounter value={s.value} suffix={s.suffix} prefix={s.prefix} label={s.label} color={s.color} duration={s.duration} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Pull-quote */}
+              <div className="p-5 rounded-2xl border border-[#7B61FF]/15 bg-white/[0.03] backdrop-blur-xl relative overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-gradient-to-b from-[#7B61FF] to-[#3ECFCF]" />
+                <p className="text-[#8A93B2] text-sm leading-relaxed italic pl-2">
+                  "Autoimmune diseases are notoriously hard to diagnose. Patients spend years being
+                  told their symptoms are in their head."
+                </p>
+                <p className="text-[#7B61FF] text-xs mt-2 pl-2 font-medium">— AARDA, 2023</p>
+              </div>
+            </FadeIn>
+          </div>
         </div>
       </section>
 
       <Divider />
 
       {/* ── 3. THE DATASET ───────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section id="s-dataset" className="py-32 px-6">
         <div className="max-w-6xl mx-auto w-full">
-          <div className="grid md:grid-cols-2 gap-16 items-start mb-12">
+
+          {/* Header */}
+          <FadeIn className="text-center mb-20">
+            <SectionLabel>The Dataset</SectionLabel>
+            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto">
+              Built on{' '}
+              <span style={{ background: 'linear-gradient(90deg,#3ECFCF,#52D0A0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                real patient data
+              </span>{' '}
+              from 3 sources.
+            </h2>
+          </FadeIn>
+
+          {/* Copy + class breakdown side by side */}
+          <div className="grid md:grid-cols-2 gap-12 items-start mb-14">
             <FadeIn>
-              <SectionLabel>The Dataset</SectionLabel>
-              <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
-                Built on <span className="text-[#3ECFCF]">real patient data</span> from 3 sources.
-              </h2>
-              <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
-                We harmonized 48,503 de-identified patient records across NHANES (73.6%), Harvard
-                Dataverse (24.8%), and supplementary clinical data: spanning CBC panels, inflammatory
-                markers, demographics, and multi-visit trajectories.
+              <p className="text-[#8A93B2] text-lg leading-relaxed">
+                We harmonized <span className="text-[#F0F2F8] font-medium">48,503</span> de-identified patient records across NHANES (73.6%),
+                Harvard Dataverse (24.8%), and supplementary clinical data — spanning CBC panels,
+                inflammatory markers, demographics, and multi-visit trajectories.
               </p>
-            </FadeIn>
-            <FadeIn delay={0.1}>
-              <div className="flex flex-col gap-3 mt-2">
+              {/* Source pills */}
+              <div className="flex flex-wrap gap-2 mt-6">
                 {[
-                  { label: 'Healthy', n: '32,706', color: '#52D0A0' },
-                  { label: 'Systemic Autoimmune', n: '13,030', color: '#7B61FF' },
-                  { label: 'GI Autoimmune', n: '801', color: '#3ECFCF' },
-                  { label: 'Endocrine Autoimmune', n: '1,966', color: '#F4A261' },
-                ].map((c) => (
+                  { name: 'NHANES', pct: '73.6%', color: '#7B61FF' },
+                  { name: 'Harvard Dataverse', pct: '24.8%', color: '#3ECFCF' },
+                  { name: 'Supplementary', pct: '1.6%', color: '#F4A261' },
+                ].map((s) => (
+                  <div
+                    key={s.name}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white/[0.04]"
+                    style={{ borderColor: `${s.color}30` }}
+                  >
+                    <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                    <span className="text-xs text-[#F0F2F8]/80">{s.name}</span>
+                    <span className="text-xs font-mono" style={{ color: s.color }}>{s.pct}</span>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={0.1}>
+              {/* Class breakdown — Apple-style table rows */}
+              <div className="rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
+                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase">Class</span>
+                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase">Patients</span>
+                </div>
+                {[
+                  { label: 'Healthy', n: '32,706', color: '#52D0A0', pct: 67.4 },
+                  { label: 'Systemic Autoimmune', n: '13,030', color: '#7B61FF', pct: 26.9 },
+                  { label: 'Endocrine Autoimmune', n: '1,966', color: '#F4A261', pct: 4.1 },
+                  { label: 'GI Autoimmune', n: '801', color: '#3ECFCF', pct: 1.6 },
+                ].map((c, i, arr) => (
                   <div
                     key={c.label}
-                    className="px-5 py-4 rounded-lg border border-white/5 bg-[#13161F]/80 flex items-center gap-6 w-full"
-                    style={{ borderLeftColor: c.color, borderLeftWidth: 3 }}
+                    className={`px-5 py-4 flex items-center gap-4 ${i < arr.length - 1 ? 'border-b border-white/5' : ''}`}
                   >
-                    <div className="font-mono text-2xl font-light" style={{ color: c.color }}>{c.n}</div>
-                    <div className="text-[#8A93B2] text-sm">{c.label}</div>
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.color }} />
+                    <div className="flex-1">
+                      <div className="text-sm text-[#F0F2F8]/85 mb-1.5">{c.label}</div>
+                      <div className="h-1 rounded-full bg-white/5 overflow-hidden w-full">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ background: c.color }}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${c.pct}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.9, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                        />
+                      </div>
+                    </div>
+                    <span className="font-mono text-sm flex-shrink-0" style={{ color: c.color }}>{c.n}</span>
                   </div>
                 ))}
               </div>
             </FadeIn>
           </div>
+
           <FadeIn delay={0.15}>
             <WideChartCard
               src="/figures/01_demographics.png"
@@ -406,33 +593,65 @@ export const Present = () => {
       <Divider />
 
       {/* ── 4. THE MODEL ─────────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section id="s-model" className="py-32 px-6">
         <div className="max-w-6xl mx-auto w-full">
-          <FadeIn className="text-center mb-12">
+
+          <FadeIn className="text-center mb-8">
             <SectionLabel>The Solution</SectionLabel>
-            <h2 className="font-display text-4xl md:text-5xl font-light mb-4 leading-tight">
+            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto mb-4">
               A hierarchical XGBoost pipeline that{' '}
-              <span className="text-[#7B61FF]">sees what doctors miss.</span>
+              <span style={{ background: 'linear-gradient(90deg,#7B61FF,#9B80FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                sees what doctors miss.
+              </span>
             </h2>
-            <p className="text-[#8A93B2] text-lg max-w-2xl mx-auto">
+            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto">
               Trained on 48K patients, ingesting routine labs every patient already has.
             </p>
           </FadeIn>
 
-          {/* Visual pipeline */}
-          <FadeIn delay={0.05} className="mb-14">
+          {/* Pipeline */}
+          <FadeIn delay={0.05} className="mb-16">
             <PipelineVisual />
           </FadeIn>
 
-          {/* Feature importance + ROC curves */}
-          <div className="grid md:grid-cols-2 gap-10 mb-6">
+          {/* AUC score cards — prominent Apple-style row */}
+          <FadeIn delay={0.1} className="mb-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Systemic AUC', val: '0.963', color: '#7B61FF' },
+                { label: 'Healthy AUC', val: '0.933', color: '#52D0A0' },
+                { label: 'Endocrine AUC', val: '0.880', color: '#F4A261' },
+                { label: 'Macro AUC', val: '0.897', color: '#3ECFCF' },
+              ].map((m, i) => (
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col items-center py-7 px-4 rounded-2xl border bg-white/[0.035] backdrop-blur-xl relative overflow-hidden"
+                  style={{ borderColor: `${m.color}22` }}
+                >
+                  <div
+                    className="absolute top-0 left-4 right-4 h-[2px] rounded-full"
+                    style={{ background: m.color }}
+                  />
+                  <span className="font-display text-4xl font-light mb-1.5" style={{ color: m.color }}>{m.val}</span>
+                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{m.label}</span>
+                </motion.div>
+              ))}
+            </div>
+          </FadeIn>
+
+          {/* Feature importance + ROC side by side */}
+          <div className="grid md:grid-cols-2 gap-8 mb-10">
             <FadeIn delay={0.1}>
               <ChartCard
                 src="/figures/08_feature_importance.png"
                 caption="Feature importance (gain): CRP and ESR dominate, confirming inflammation markers as key signals"
               />
             </FadeIn>
-            <FadeIn delay={0.2}>
+            <FadeIn delay={0.18}>
               <ChartCard
                 src="/figures/07_roc_curves.png"
                 caption="ROC curves by disease cluster: Systemic AUC 0.963, Healthy AUC 0.933"
@@ -440,24 +659,7 @@ export const Present = () => {
             </FadeIn>
           </div>
 
-          {/* AUC metrics — full-width, each taking one quarter */}
-          <FadeIn delay={0.15} className="mb-10">
-            <div className="grid grid-cols-4 gap-4">
-              {[
-                { label: 'Systemic', val: '0.963', color: '#7B61FF' },
-                { label: 'Healthy', val: '0.933', color: '#52D0A0' },
-                { label: 'Endocrine', val: '0.880', color: '#F4A261' },
-                { label: 'Overall', val: '0.897', color: '#3ECFCF' },
-              ].map((m) => (
-                <div key={m.label} className="p-5 rounded-xl border border-white/5 bg-[#13161F]/80 text-center">
-                  <div className="font-mono text-3xl font-light mb-1" style={{ color: m.color }}>{m.val}</div>
-                  <div className="text-[#8A93B2] text-xs tracking-widest uppercase">{m.label}</div>
-                </div>
-              ))}
-            </div>
-          </FadeIn>
-
-          {/* Model comparison — wide, full-width */}
+          {/* Model comparison */}
           <FadeIn delay={0.1}>
             <WideChartCard
               src="/figures/04_model_comparison.png"
@@ -470,40 +672,46 @@ export const Present = () => {
       <Divider />
 
       {/* ── 5. EARLY DETECTION ───────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section id="s-early" className="py-32 px-6">
         <div className="max-w-6xl mx-auto w-full">
-          <FadeIn className="text-center mb-12 max-w-3xl mx-auto">
+
+          <FadeIn className="text-center mb-14">
             <SectionLabel>Early Detection</SectionLabel>
-            <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
-              Confident at <span className="text-[#52D0A0]">Visit 1.</span>
+            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto mb-6">
+              Confident at{' '}
+              <span style={{ background: 'linear-gradient(90deg,#52D0A0,#3ECFCF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                Visit 1.
+              </span>
               <br />Before symptoms escalate.
             </h2>
-            <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
-              Using only demographics and a basic CBC from the very first visit, the model already
-              flags systemic autoimmune disease at <span className="text-[#F0F2F8]">72% confidence</span>.
+            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto leading-relaxed">
+              Using only demographics and a basic CBC from the very first visit, the model
+              already flags systemic autoimmune disease at{' '}
+              <span className="text-[#F0F2F8] font-medium">72% confidence</span>.
               For healthy patients, it avoids unnecessary workups — saving visits and cost.
             </p>
-            <div className="flex gap-4 justify-center">
-              <div className="p-4 rounded-xl border border-[#52D0A0]/20 bg-[#52D0A0]/5 flex-1 max-w-xs">
-                <div className="flex items-center gap-2 mb-1 justify-center">
-                  <div className="w-2 h-2 rounded-full bg-[#52D0A0]" />
-                  <span className="text-[#52D0A0] font-medium text-sm">Healthy patients</span>
+          </FadeIn>
+
+          {/* Two outcome pills */}
+          <FadeIn delay={0.1} className="mb-14">
+            <div className="grid sm:grid-cols-2 gap-5 max-w-2xl mx-auto">
+              {[
+                { dot: '#52D0A0', name: 'Healthy patients', pct: '98%', sub: 'correctly cleared — save 3 specialist visits' },
+                { dot: '#7B61FF', name: 'Systemic autoimmune', pct: '99%', sub: 'correctly flagged — save 1+ specialist visits' },
+              ].map((c) => (
+                <div
+                  key={c.name}
+                  className="flex flex-col items-center py-8 px-6 rounded-2xl border bg-white/[0.035] backdrop-blur-xl text-center"
+                  style={{ borderColor: `${c.dot}25` }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 rounded-full" style={{ background: c.dot }} />
+                    <span className="text-xs font-mono tracking-widest uppercase" style={{ color: c.dot }}>{c.name}</span>
+                  </div>
+                  <span className="font-display text-5xl font-light mb-1" style={{ color: c.dot }}>{c.pct}</span>
+                  <span className="text-[#8A93B2] text-xs leading-relaxed max-w-[180px]">{c.sub}</span>
                 </div>
-                <div className="flex items-end gap-2 justify-center">
-                  <span className="font-display text-3xl text-[#52D0A0]">98%</span>
-                  <span className="text-[#8A93B2] text-sm mb-1">save 3 visits</span>
-                </div>
-              </div>
-              <div className="p-4 rounded-xl border border-[#7B61FF]/20 bg-[#7B61FF]/5 flex-1 max-w-xs">
-                <div className="flex items-center gap-2 mb-1 justify-center">
-                  <div className="w-2 h-2 rounded-full bg-[#7B61FF]" />
-                  <span className="text-[#7B61FF] font-medium text-sm">Systemic autoimmune</span>
-                </div>
-                <div className="flex items-end gap-2 justify-center">
-                  <span className="font-display text-3xl text-[#7B61FF]">99%</span>
-                  <span className="text-[#8A93B2] text-sm mb-1">save 1 or more visits</span>
-                </div>
-              </div>
+              ))}
             </div>
           </FadeIn>
 
@@ -519,54 +727,63 @@ export const Present = () => {
       <Divider />
 
       {/* ── 6. IMPACT ────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section id="s-impact" className="py-32 px-6">
         <div className="max-w-6xl mx-auto w-full">
-          <FadeIn className="text-center mb-16">
+
+          <FadeIn className="text-center mb-20">
             <SectionLabel>The Impact</SectionLabel>
-            <h2 className="font-display text-4xl md:text-5xl font-light mb-4 leading-tight">
-              <span className="text-[#F4A261]">$2,059</span> saved per patient.
-              <br />
-              <span className="text-[#3ECFCF]">Visits avoided.</span> Lives reclaimed.
+            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-2xl mx-auto mb-4">
+              <span style={{ background: 'linear-gradient(90deg,#F4A261,#FFD580)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                $2,059
+              </span>{' '}
+              saved per patient.
             </h2>
-            <p className="text-[#8A93B2] text-lg max-w-2xl mx-auto">
+            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto">
               By flagging autoimmune patterns early, Aura eliminates unnecessary specialist
               referrals, repeat testing, and months of diagnostic limbo.
             </p>
           </FadeIn>
 
-          <div className="grid md:grid-cols-2 gap-12 items-stretch">
-            <FadeIn delay={0.1} className="flex flex-col">
-              <div className="text-center mb-6">
+          <div className="grid md:grid-cols-5 gap-6 items-stretch">
+
+            {/* Left col — financial breakdown table (3 cols wide) */}
+            <FadeIn delay={0.08} className="md:col-span-3 flex flex-col">
+              {/* Headline stat */}
+              <div className="flex justify-around py-8 rounded-2xl border border-[#F4A261]/15 bg-white/[0.03] backdrop-blur-xl mb-4">
                 <StatCounter value={2059} prefix="$" label="Saved per healthy patient" color="#F4A261" duration={2000} />
+                <div className="w-px bg-white/5" />
+                <StatCounter value={707} prefix="$" label="Saved per systemic patient" color="#7B61FF" duration={1600} />
               </div>
-              <div className="flex-1 p-5 rounded-2xl border border-[#3ECFCF]/15 bg-[#13161F]/80 backdrop-blur-md">
-                <h3 className="text-[#3ECFCF] font-medium mb-3 text-sm tracking-wide uppercase">At National Scale</h3>
-                <div className="space-y-3 text-[#8A93B2]">
-                  {[
-                    ['50M patients in the US', '50,000,000', '#F0F2F8'],
-                    ['Avg specialist visits avoided', '1–3', '#F0F2F8'],
-                    ['Cost per visit avoided', '$700', '#F0F2F8'],
-                    ['Potential US savings', '$35–100B', '#F4A261'],
-                  ].map(([k, v, c]) => (
-                    <React.Fragment key={String(k)}>
-                      <div className="flex justify-between items-center">
-                        <span>{k}</span>
-                        <span className="font-mono font-bold" style={{ color: c }}>{v}</span>
-                      </div>
-                      <div className="h-px bg-white/5" />
-                    </React.Fragment>
-                  ))}
+
+              {/* National scale table */}
+              <div className="flex-1 rounded-2xl border border-[#3ECFCF]/15 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+                <div className="px-6 py-3 border-b border-white/5">
+                  <span className="text-[10px] font-mono tracking-widest text-[#3ECFCF] uppercase">At National Scale</span>
                 </div>
+                {[
+                  ['50M patients in the US', '50,000,000', '#F0F2F8'],
+                  ['Avg specialist visits avoided', '1–3', '#F0F2F8'],
+                  ['Cost per visit avoided', '$700', '#F0F2F8'],
+                  ['Potential US savings', '$35–100B', '#F4A261'],
+                ].map(([k, v, c], i, arr) => (
+                  <div
+                    key={String(k)}
+                    className={`flex justify-between items-center px-6 py-4 ${i < arr.length - 1 ? 'border-b border-white/5' : ''}`}
+                  >
+                    <span className="text-[#8A93B2] text-sm">{k}</span>
+                    <span className="font-mono text-sm font-medium" style={{ color: c }}>{v}</span>
+                  </div>
+                ))}
               </div>
             </FadeIn>
 
-            <FadeIn delay={0.2} className="flex flex-col">
-              <div className="text-center mb-6">
-                <StatCounter value={707} prefix="$" label="Saved per systemic patient" color="#7B61FF" duration={1600} />
-              </div>
-              <div className="flex-1 p-5 rounded-2xl border border-[#7B61FF]/15 bg-[#13161F]/80 backdrop-blur-md">
-                <h3 className="text-[#7B61FF] font-medium mb-3 text-sm tracking-wide uppercase">Beyond Cost</h3>
-                <div className="space-y-3 text-[#8A93B2] text-sm">
+            {/* Right col — beyond cost list (2 cols wide) */}
+            <FadeIn delay={0.16} className="md:col-span-2 flex flex-col">
+              <div className="flex-1 rounded-2xl border border-[#7B61FF]/15 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+                <div className="px-6 py-3 border-b border-white/5">
+                  <span className="text-[10px] font-mono tracking-widest text-[#7B61FF] uppercase">Beyond Cost</span>
+                </div>
+                <div className="px-6 py-5 space-y-4">
                   {[
                     'Earlier treatment prevents irreversible organ damage',
                     'Reduces diagnostic odyssey and patient mental burden',
@@ -574,9 +791,13 @@ export const Present = () => {
                     'Equitable across age groups and both sexes',
                     'SOAP note generation ready for clinical workflow',
                   ].map((t) => (
-                    <div key={t} className="flex items-start gap-2">
-                      <span className="text-[#52D0A0] mt-0.5 flex-shrink-0">✓</span>
-                      <span>{t}</span>
+                    <div key={t} className="flex items-start gap-3">
+                      <div className="w-4 h-4 rounded-full border border-[#52D0A0]/40 bg-[#52D0A0]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M1.5 4l2 2L6.5 2" stroke="#52D0A0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                      <span className="text-[#8A93B2] text-sm leading-snug">{t}</span>
                     </div>
                   ))}
                 </div>
@@ -588,81 +809,84 @@ export const Present = () => {
 
       <Divider />
 
-      {/* ── 7. DATA EXPLORATION & UNDERSTANDING ─────────────────────────── */}
-      <section className="py-24 px-6">
+      {/* ── 7. DATA EXPLORATION ──────────────────────────────────────────── */}
+      <section id="s-explore" className="py-32 px-6">
         <div className="max-w-6xl mx-auto w-full">
-          <FadeIn className="text-center mb-14">
+
+          <FadeIn className="text-center mb-20">
             <SectionLabel>Data Exploration</SectionLabel>
-            <h2 className="font-display text-4xl md:text-5xl font-light mb-4 leading-tight">
+            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto mb-4">
               Understanding the data{' '}
-              <span className="text-[#3ECFCF]">before the model.</span>
+              <span style={{ background: 'linear-gradient(90deg,#3ECFCF,#7B61FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                before the model.
+              </span>
             </h2>
-            <p className="text-[#8A93B2] text-lg max-w-2xl mx-auto">
+            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto">
               Rigorous EDA informed every modeling decision — from feature selection to
               class balancing and Z-score normalization.
             </p>
           </FadeIn>
 
-          {/* Source distribution — wide */}
-          <FadeIn delay={0.05} className="mb-10">
+          {/* Source & cluster distribution */}
+          <FadeIn delay={0.05} className="mb-8">
             <WideChartCard
               src="/figures/01_source_distribution.png"
               caption="Data sources: NHANES (73.6%) and Harvard Dataverse (24.8%), cluster distribution varies meaningfully by source"
             />
           </FadeIn>
-
-          {/* Cluster distribution — full width */}
-          <FadeIn delay={0.1} className="mb-10">
+          <FadeIn delay={0.08} className="mb-8">
             <WideChartCard
               src="/figures/01_cluster_distribution.png"
               caption="Disease cluster distribution across the full dataset"
             />
           </FadeIn>
 
-          {/* Z-score distribution — full width */}
-          <FadeIn delay={0.1} className="mb-10">
-            <WideChartCard
-              src="/figures/05_zscore_analysis.png"
-              caption="Z-score distributions: normalization reveals population-level deviations per cluster"
-            />
-          </FadeIn>
-
-          {/* Feature correlation — near-square, centered, capped width */}
-          <FadeIn delay={0.1} className="mb-10">
-            <div className="max-w-3xl mx-auto">
+          {/* Z-score + correlation matrix side by side */}
+          <div className="grid md:grid-cols-5 gap-8 mb-10">
+            <FadeIn delay={0.1} className="md:col-span-3">
+              <WideChartCard
+                src="/figures/05_zscore_analysis.png"
+                caption="Z-score distributions: normalization reveals population-level deviations per cluster"
+              />
+            </FadeIn>
+            <FadeIn delay={0.14} className="md:col-span-2">
               <ChartCard
                 src="/figures/02_feature_correlation.png"
-                caption="Feature correlation matrix: Hemoglobin/Hematocrit tightly correlated (0.95), CRP and ESR independently informative"
+                caption="Feature correlation matrix: Hemoglobin/Hematocrit tightly correlated (0.95)"
               />
-            </div>
-          </FadeIn>
+            </FadeIn>
+          </div>
 
-          {/* Key findings callout strip */}
+          {/* Key findings — 3 insight cards */}
           <FadeIn delay={0.15}>
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-3 gap-5">
               {[
                 {
                   title: 'CRP & ESR are independent',
                   desc: 'Low correlation between each other despite both being inflammation markers. The model benefits from both.',
                   color: '#7B61FF',
+                  index: '01',
                 },
                 {
                   title: 'Hemoglobin ↔ Hematocrit: r = 0.95',
                   desc: 'Near-perfect collinearity. Z-score features break this dependency by adjusting for population context.',
                   color: '#3ECFCF',
+                  index: '02',
                 },
                 {
                   title: 'Neutrophil ↔ Lymphocyte: r = −0.84',
                   desc: 'Strong inverse relationship reflects the classic inflammatory shift, a key biomarker pattern for autoimmune detection.',
                   color: '#F4A261',
+                  index: '03',
                 },
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="p-4 rounded-xl border border-white/5 bg-[#13161F]/65"
-                  style={{ borderTopColor: item.color, borderTopWidth: 2 }}
+                  className="p-5 rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur-xl relative overflow-hidden"
                 >
-                  <div className="font-medium text-sm mb-1" style={{ color: item.color }}>{item.title}</div>
+                  <div className="absolute top-0 left-5 right-5 h-[2px] rounded-full" style={{ background: item.color }} />
+                  <span className="font-mono text-[10px] text-[#8A93B2]/40 tracking-widest absolute top-4 right-4">{item.index}</span>
+                  <div className="font-medium text-sm mb-2 mt-3" style={{ color: item.color }}>{item.title}</div>
                   <div className="text-[#8A93B2] text-xs leading-relaxed">{item.desc}</div>
                 </div>
               ))}
@@ -674,47 +898,62 @@ export const Present = () => {
       <Divider />
 
       {/* ── 8. CLOSING CTA ───────────────────────────────────────────────── */}
-      <section className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-24 text-center relative overflow-hidden">
+      <section id="s-cta" className="min-h-[80vh] flex flex-col items-center justify-center px-6 py-28 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(62,207,207,0.07) 0%, transparent 30%)',
-          filter: 'blur(30px)',
+          background: 'radial-gradient(ellipse 70% 55% at 50% 52%, rgba(62,207,207,0.09) 0%, rgba(123,97,255,0.05) 40%, transparent 70%)',
         }} />
-        <FadeIn className="relative z-10 max-w-3xl">
-          <SectionLabel>Aura · Golden Byte 2026</SectionLabel>
-          <h2 className="font-display text-5xl md:text-7xl font-light mb-6 leading-tight">
+
+        <FadeIn className="relative z-10 max-w-3xl w-full">
+          {/* Tag */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl mb-10">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#7B61FF] animate-pulse" />
+            <span className="text-xs font-mono tracking-widest text-[#8A93B2] uppercase">Aura · Golden Byte 2026</span>
+          </div>
+
+          {/* Headline */}
+          <h2 className="font-display text-6xl md:text-8xl font-light mb-6 leading-[0.92] tracking-tight">
             Routine labs.{' '}
-            <span className="bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#7B61FF] via-[#9B7FFF] to-[#3ECFCF] bg-clip-text text-transparent">
               Extraordinary insight.
             </span>
           </h2>
-          <p className="text-[#8A93B2] text-lg mb-12 max-w-xl mx-auto leading-relaxed">
+
+          <p className="text-[#8A93B2] text-lg mb-14 max-w-lg mx-auto leading-relaxed">
             Aura sits at the intersection of clinical AI and patient equity — transforming data
             every physician already has into a life-changing early warning system.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
             <a
               href="/"
-              className="px-8 py-3.5 rounded-xl font-medium text-white transition-all hover:scale-105 active:scale-100"
+              className="px-9 py-4 rounded-xl font-medium text-white text-sm tracking-wide transition-all hover:scale-105 active:scale-[0.98] shadow-lg"
               style={{ background: 'linear-gradient(135deg, #7B61FF, #2563EB)' }}
             >
               Try Aura Live
             </a>
             <a
               href="/clinician"
-              className="px-8 py-3.5 rounded-xl font-medium border border-[#3ECFCF]/30 text-[#3ECFCF] hover:bg-[#3ECFCF]/10 transition-all hover:scale-105 active:scale-100"
+              className="px-9 py-4 rounded-xl font-medium text-sm tracking-wide border border-[#3ECFCF]/30 text-[#3ECFCF] hover:bg-[#3ECFCF]/8 transition-all hover:scale-105 active:scale-[0.98] backdrop-blur-xl"
             >
               Clinician Portal
             </a>
           </div>
-          <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
+
+          {/* Final stats strip */}
+          <div className="grid grid-cols-3 gap-5 max-w-md mx-auto">
             {[
-              { val: '0.90', label: 'AUC Score' },
-              { val: '48K', label: 'Patients Trained' },
-              { val: '$2K+', label: 'Saved / Patient' },
+              { val: '0.90', label: 'AUC Score', color: '#7B61FF' },
+              { val: '48K', label: 'Patients Trained', color: '#3ECFCF' },
+              { val: '$2K+', label: 'Saved / Patient', color: '#F4A261' },
             ].map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="font-display text-3xl text-[#F0F2F8] font-light">{s.val}</div>
-                <div className="text-[#8A93B2] text-xs tracking-widest uppercase mt-1">{s.label}</div>
+              <div
+                key={s.label}
+                className="flex flex-col items-center py-5 px-3 rounded-2xl border bg-white/[0.04] backdrop-blur-xl"
+                style={{ borderColor: `${s.color}20` }}
+              >
+                <span className="font-display text-2xl font-light" style={{ color: s.color }}>{s.val}</span>
+                <span className="text-[9px] font-mono tracking-widest text-[#8A93B2] uppercase mt-1.5 text-center">{s.label}</span>
               </div>
             ))}
           </div>
