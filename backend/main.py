@@ -30,6 +30,7 @@ from backend.routers import (  # noqa: E402 — must come after patch
     jobs,
     moderate,
     pipeline,
+    report,
     research,
     route,
     stream,
@@ -86,6 +87,7 @@ app.include_router(route.router, tags=["Pipeline"])
 app.include_router(translate.router, tags=["Pipeline"])
 app.include_router(moderate.router, tags=["Moderation"])
 app.include_router(pipeline.router, tags=["Pipeline"])
+app.include_router(report.router, tags=["Report"])
 app.include_router(stream.router, tags=["Streaming"])
 app.include_router(jobs.router, tags=["Jobs"])
 
