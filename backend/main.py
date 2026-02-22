@@ -30,6 +30,7 @@ apply_patch()
 
 from backend.routers import (  # noqa: E402 — must come after patch
     body_map,
+    demo,
     diagnose,
     extract,
     interview,
@@ -98,6 +99,7 @@ app.include_router(report.router, tags=["Report"])
 app.include_router(stream.router, tags=["Streaming"])
 app.include_router(jobs.router, tags=["Jobs"])
 app.include_router(diagnose.router, tags=["Diagnosis"])
+app.include_router(demo.router, tags=["Demo"])
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
