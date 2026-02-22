@@ -80,3 +80,6 @@ CLAUDE.md
 # Infrastructure docs with secrets
 databricks.md
 vm.md
+
+# Reference repos (cloned for architecture research)
+.research-refs/
