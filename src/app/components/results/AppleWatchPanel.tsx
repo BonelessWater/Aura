@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart,
 } from 'recharts';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────────
 function parseCSV(text: string): Record<string, string>[] {
@@ -102,19 +102,60 @@ const ChartTooltip = ({
   );
 };
 
-// ─── Mini chart card ──────────────────────────────────────────────────────────
-function MetricCard({ title, color, children, badge }: {
-  title: string; color: string; children: React.ReactNode; badge?: string;
+// ─── Collapsible metric card ──────────────────────────────────────────────────
+function MetricCard({
+  title, color, badge, stats, chartOpen, onToggleChart, children,
+}: {
+  title: string; color: string; badge?: string;
+  stats: { label: string; value: string }[];
+  chartOpen: boolean; onToggleChart: () => void;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#0A0D14] border border-[#2A2E3B] rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-[#0A0D14] border border-[#2A2E3B] rounded-xl p-4 space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color }}>{title}</span>
         {badge && (
           <span className="text-[10px] font-mono text-[#8A93B2] bg-[#1A1D26] px-2 py-0.5 rounded">{badge}</span>
         )}
       </div>
-      {children}
+
+      {/* Summary stat row */}
+      <div className="grid grid-cols-3 gap-2">
+        {stats.map(s => (
+          <div key={s.label} className="text-center">
+            <div className="font-mono text-sm font-semibold" style={{ color }}>{s.value}</div>
+            <div className="text-[9px] text-[#555870] mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Toggle button */}
+      <button
+        onClick={onToggleChart}
+        className="w-full text-[10px] font-medium py-1.5 rounded-lg transition-colors border"
+        style={chartOpen
+          ? { color, borderColor: `${color}30`, background: `${color}10` }
+          : { color: '#555870', borderColor: '#1E2130', background: 'transparent' }}
+      >
+        {chartOpen ? 'Hide graph ↑' : 'Show full graph ↓'}
+      </button>
+
+      {/* Collapsible chart */}
+      <AnimatePresence>
+        {chartOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -222,6 +263,9 @@ export const AppleWatchPanel = () => {
   const [cal, setCal] = useState<{ day: string; value: number }[]>([]);
   const [resp, setResp] = useState<{ day: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openChart, setOpenChart] = useState<string | null>(null);
+
+  const toggleChart = (id: string) => setOpenChart(prev => prev === id ? null : id);
 
   useEffect(() => {
     Promise.all([
@@ -238,10 +282,6 @@ export const AppleWatchPanel = () => {
     });
   }, []);
 
-  const latestHr = hr[hr.length - 1]?.value;
-  const latestResp = resp[resp.length - 1]?.value;
-  const lastSleep = sleep[sleep.length - 1];
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40 text-[#8A93B2] text-xs">
@@ -250,33 +290,37 @@ export const AppleWatchPanel = () => {
     );
   }
 
+  // Compute averages / min / max for summary rows
+  const hrVals = hr.map(d => d.value);
+  const calVals = cal.map(d => d.value);
+  const respVals = resp.map(d => d.value);
+  const sleepHrs = sleep.map(d => d.hours);
+  const sleepQ = sleep.map(d => d.quality);
+
+  const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+  const min = (arr: number[]) => arr.length ? Math.min(...arr) : 0;
+  const max = (arr: number[]) => arr.length ? Math.max(...arr) : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-5"
+      className="space-y-4"
     >
-      {/* Stat strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Heart Rate', value: latestHr ? `${latestHr} bpm` : '—', color: '#E07070' },
-          { label: 'Sleep Last Night', value: lastSleep ? `${lastSleep.hours}h` : '—', color: '#7B61FF' },
-          { label: 'Sleep Quality', value: lastSleep ? `${lastSleep.quality}%` : '—', color: '#3ECFCF' },
-          { label: 'Resp. Rate', value: latestResp ? `${latestResp} /min` : '—', color: '#52D0A0' },
-        ].map(s => (
-          <div key={s.label} className="bg-[#0A0D14] border border-[#2A2E3B] rounded-xl px-4 py-3 text-center">
-            <div className="text-[9px] uppercase tracking-wider text-[#8A93B2] mb-1">{s.label}</div>
-            <div className="font-mono text-sm font-semibold" style={{ color: s.color }}>{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Streaming heart rate */}
+      {/* Streaming heart rate — unchanged */}
       <StreamingHR />
 
       {/* Avg HR per day */}
-      <MetricCard title="Avg Heart Rate / Day" color="#E07070" badge="bpm">
+      <MetricCard
+        title="Heart Rate" color="#E07070" badge="bpm"
+        stats={[
+          { label: 'Average', value: `${avg(hrVals)} bpm` },
+          { label: 'Lowest day', value: `${min(hrVals)} bpm` },
+          { label: 'Highest day', value: `${max(hrVals)} bpm` },
+        ]}
+        chartOpen={openChart === 'hr'} onToggleChart={() => toggleChart('hr')}
+      >
         <ResponsiveContainer width="100%" height={120}>
           <LineChart data={hr}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1A1D26" />
@@ -289,7 +333,15 @@ export const AppleWatchPanel = () => {
       </MetricCard>
 
       {/* Sleep hours per night */}
-      <MetricCard title="Sleep / Night" color="#7B61FF" badge="hours">
+      <MetricCard
+        title="Sleep" color="#7B61FF" badge="hours"
+        stats={[
+          { label: 'Average', value: `${(sleepHrs.reduce((a, b) => a + b, 0) / (sleepHrs.length || 1)).toFixed(1)}h` },
+          { label: 'Least', value: `${Math.min(...sleepHrs).toFixed(1)}h` },
+          { label: 'Most', value: `${Math.max(...sleepHrs).toFixed(1)}h` },
+        ]}
+        chartOpen={openChart === 'sleep'} onToggleChart={() => toggleChart('sleep')}
+      >
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={sleep}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1A1D26" />
@@ -301,8 +353,16 @@ export const AppleWatchPanel = () => {
         </ResponsiveContainer>
       </MetricCard>
 
-      {/* Sleep quality % */}
-      <MetricCard title="Sleep Quality (Deep + REM %)" color="#3ECFCF" badge="%">
+      {/* Sleep quality */}
+      <MetricCard
+        title="Sleep Quality (Deep + REM)" color="#3ECFCF" badge="%"
+        stats={[
+          { label: 'Average', value: `${avg(sleepQ)}%` },
+          { label: 'Worst night', value: `${min(sleepQ)}%` },
+          { label: 'Best night', value: `${max(sleepQ)}%` },
+        ]}
+        chartOpen={openChart === 'sleepq'} onToggleChart={() => toggleChart('sleepq')}
+      >
         <ResponsiveContainer width="100%" height={120}>
           <LineChart data={sleep}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1A1D26" />
@@ -314,8 +374,16 @@ export const AppleWatchPanel = () => {
         </ResponsiveContainer>
       </MetricCard>
 
-      {/* Active calories per day */}
-      <MetricCard title="Active Calories / Day" color="#F4A261" badge="Cal">
+      {/* Active calories */}
+      <MetricCard
+        title="Active Calories" color="#F4A261" badge="Cal"
+        stats={[
+          { label: 'Daily avg', value: `${avg(calVals)} Cal` },
+          { label: 'Lowest day', value: `${min(calVals)} Cal` },
+          { label: 'Highest day', value: `${max(calVals)} Cal` },
+        ]}
+        chartOpen={openChart === 'cal'} onToggleChart={() => toggleChart('cal')}
+      >
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={cal}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1A1D26" />
@@ -327,8 +395,16 @@ export const AppleWatchPanel = () => {
         </ResponsiveContainer>
       </MetricCard>
 
-      {/* Respiratory rate per day */}
-      <MetricCard title="Respiratory Rate / Day" color="#52D0A0" badge="/min">
+      {/* Respiratory rate */}
+      <MetricCard
+        title="Respiratory Rate" color="#52D0A0" badge="/min"
+        stats={[
+          { label: 'Average', value: `${avg(respVals)} /min` },
+          { label: 'Lowest day', value: `${min(respVals)} /min` },
+          { label: 'Highest day', value: `${max(respVals)} /min` },
+        ]}
+        chartOpen={openChart === 'resp'} onToggleChart={() => toggleChart('resp')}
+      >
         <ResponsiveContainer width="100%" height={120}>
           <LineChart data={resp}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1A1D26" />

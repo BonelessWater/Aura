@@ -406,6 +406,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
   const [showMethodology, setShowMethodology] = useState(false);
   const [showEvidence, setShowEvidence] = useState(false);
   const [expandedNextStep, setExpandedNextStep] = useState<number | null>(null);
+  const [expandedPatientMetric, setExpandedPatientMetric] = useState<string | null>(null);
   const navigate = useNavigate();
   const mainRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -497,7 +498,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
       <div ref={wrapperRef} className="flex flex-col h-screen overflow-hidden relative">
 
         {/* Glass pane — frosted layer over blood cell background */}
-        <div className="fixed inset-0 pointer-events-none z-[1] backdrop-blur-md bg-[#020005]/35" />
+        <div className="fixed inset-0 pointer-events-none z-[1] bg-[#020005]/15" />
 
         {/* Content sits above glass pane */}
         <div className="relative z-[2] flex flex-col flex-1 overflow-hidden">
@@ -943,10 +944,173 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
             <motion.div
               id="patient-data"
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-              className="scroll-target dashboard-card p-8"
+              className="scroll-target space-y-4"
             >
-              <h3 className="text-lg font-medium text-[#F0F2F8] mb-6">Patient Data</h3>
-              <AppleWatchPanel />
+              {/* Header */}
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-medium text-[#F0F2F8]">Your Health Picture</h3>
+                  <p className="text-sm text-[#8A93B2] mt-0.5">18 months of data. Your numbers tell a clear story — tap any card for the full graph.</p>
+                </div>
+                <span className="text-[10px] font-semibold bg-[#3ECFCF]/10 text-[#3ECFCF] border border-[#3ECFCF]/20 px-2.5 py-1 rounded-full">
+                  9 data points tracked
+                </span>
+              </div>
+
+              {/* Metric cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {([
+                  {
+                    id: 'pat-crp',
+                    label: 'Inflammation',
+                    sublabel: 'CRP level',
+                    value: '14.1',
+                    unit: 'mg/L',
+                    normalRange: 'Normal: < 3.0',
+                    status: 'Above Normal',
+                    statusColor: '#E07070',
+                    trend: 'up' as const,
+                    trendLabel: '+340% over 18 months',
+                    plainDesc: "Your body has been signalling inflammation for a long time. This number was already elevated when you started tracking — and it's still climbing.",
+                    data: crpTrendData,
+                    color: '#E07070',
+                    chartTitle: 'Your inflammation level over time',
+                    chartSubtitle: 'Steadily rising — now 4.7× the upper limit of normal',
+                    explanation: 'CRP is a protein your liver releases when it detects inflammation. Yours rose from 3.2 to 14.1 mg/L over 18 months — a 340% increase. The normal ceiling is 3.0. A marker this consistently elevated, with no downturn, is one of the clearest signals in your data.',
+                  },
+                  {
+                    id: 'pat-wbc',
+                    label: 'Immune Defense',
+                    sublabel: 'White Blood Cells',
+                    value: '2.8',
+                    unit: '× 10⁹/L',
+                    normalRange: 'Normal: 4.5 – 11.0',
+                    status: 'Below Normal',
+                    statusColor: '#3ECFCF',
+                    trend: 'down' as const,
+                    trendLabel: '−52% over 18 months',
+                    plainDesc: 'The cells that fight infections are running low and still dropping. A slow, steady decline like this over 18 months is harder to explain than a one-off dip.',
+                    data: wbcTrendData,
+                    color: '#3ECFCF',
+                    chartTitle: 'Your immune cell count over time',
+                    chartSubtitle: 'Slowly falling — now below the healthy minimum',
+                    explanation: 'White blood cells are your immune defense. A healthy count sits between 4.5 and 11.0. Yours has dropped from 5.8 to 2.8 — a 52% fall over 18 months. The gradual, consistent direction of this decline, combined with your other results, is what makes it significant.',
+                  },
+                  {
+                    id: 'pat-ana',
+                    label: 'Immune Signal',
+                    sublabel: 'ANA Titer',
+                    value: '1:640',
+                    unit: '',
+                    normalRange: 'Normal: < 1:80',
+                    status: 'Elevated',
+                    statusColor: '#F4A261',
+                    trend: 'up' as const,
+                    trendLabel: '8× increase over 18 months',
+                    plainDesc: 'A marker that can mean your immune system is reacting to your own cells. Yours went from the edge of normal to significantly elevated — and it keeps rising.',
+                    data: anaTrendData,
+                    color: '#F4A261',
+                    chartTitle: 'Your immune activation marker over time',
+                    chartSubtitle: 'Climbed from borderline to significantly elevated',
+                    explanation: 'ANA (antinuclear antibodies) tests whether your immune system is making antibodies against your own cells. Yours rose from 1:80 — the edge of acceptable — to 1:640. Clinicians pay attention above 1:160. The consistent rise over time is what matters most here.',
+                  },
+                ] as const).map(metric => (
+                  <button
+                    key={metric.id}
+                    onClick={() => setExpandedPatientMetric(expandedPatientMetric === metric.id ? null : metric.id)}
+                    className="dashboard-card p-4 text-left hover:border-white/[0.12] transition-all group space-y-3 w-full"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-[#F0F2F8]">{metric.label}</p>
+                        <p className="text-[10px] text-[#555870]">{metric.sublabel}</p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                        style={{ background: `${metric.statusColor}15`, color: metric.statusColor, border: `1px solid ${metric.statusColor}30` }}>
+                        {metric.status}
+                      </span>
+                    </div>
+
+                    <div className="flex items-end gap-1.5">
+                      <span className="text-2xl font-mono font-bold" style={{ color: metric.statusColor }}>{metric.value}</span>
+                      {metric.unit && <span className="text-[10px] text-[#555870] mb-1">{metric.unit}</span>}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] font-semibold" style={{ color: metric.statusColor }}>
+                        {metric.trend === 'up' ? '↑' : '↓'} {metric.trendLabel}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-[#8A93B2] leading-snug">{metric.plainDesc}</p>
+
+                    <p className="text-[10px] text-[#4A5070] group-hover:text-[#7B61FF] transition-colors">
+                      {expandedPatientMetric === metric.id ? 'Hide graph ↑' : 'See graph →'}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Expanded graph panel */}
+              <AnimatePresence>
+                {expandedPatientMetric && (() => {
+                  const metrics = [
+                    { id: 'pat-crp', data: crpTrendData, color: '#E07070', chartTitle: 'Your inflammation level over time', chartSubtitle: 'Steadily rising — now 4.7× the upper limit of normal', explanation: 'CRP is a protein your liver releases when it detects inflammation. Yours rose from 3.2 to 14.1 mg/L over 18 months — a 340% increase. The normal ceiling is 3.0. A marker this consistently elevated, with no downturn, is one of the clearest signals in your data.' },
+                    { id: 'pat-wbc', data: wbcTrendData, color: '#3ECFCF', chartTitle: 'Your immune cell count over time', chartSubtitle: 'Slowly falling — now below the healthy minimum', explanation: 'White blood cells are your immune defense. A healthy count sits between 4.5 and 11.0. Yours has dropped from 5.8 to 2.8 — a 52% fall over 18 months. The gradual, consistent direction of this decline, combined with your other results, is what makes it significant.' },
+                    { id: 'pat-ana', data: anaTrendData, color: '#F4A261', chartTitle: 'Your immune activation marker over time', chartSubtitle: 'Climbed from borderline to significantly elevated', explanation: 'ANA tests whether your immune system is making antibodies against your own cells. Yours rose from 1:80 to 1:640. Clinicians pay attention above 1:160. The consistent rise over time is what matters most here.' },
+                  ];
+                  const m = metrics.find(x => x.id === expandedPatientMetric);
+                  if (!m) return null;
+                  return (
+                    <motion.div
+                      key={m.id}
+                      initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="dashboard-card p-6 space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h4 className="text-sm font-semibold text-[#F0F2F8]">{m.chartTitle}</h4>
+                            <p className="text-xs mt-0.5" style={{ color: m.color }}>{m.chartSubtitle}</p>
+                          </div>
+                          <button onClick={() => setExpandedPatientMetric(null)} className="text-xs text-[#8A93B2] hover:text-white transition-colors shrink-0 mt-0.5">Close</button>
+                        </div>
+                        <div className="h-52">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={m.data} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                              <defs>
+                                <linearGradient id={`pg-${m.id}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor={m.color} stopOpacity={0.3} />
+                                  <stop offset="100%" stopColor={m.color} stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid stroke="#1A1D26" strokeDasharray="3 3" />
+                              <XAxis dataKey="month" tick={{ fill: '#8A93B2', fontSize: 11 }} axisLine={false} tickLine={false} />
+                              <YAxis tick={{ fill: '#8A93B2', fontSize: 11 }} axisLine={false} tickLine={false} />
+                              <Area type="monotone" dataKey="value" stroke={m.color} strokeWidth={2} fill={`url(#pg-${m.id})`}
+                                dot={{ fill: '#0A0D14', stroke: m.color, strokeWidth: 2, r: 4 }}
+                                activeDot={{ r: 6 }}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] text-xs text-[#8A93B2] leading-relaxed">
+                          <p className="text-[#F0F2F8] font-medium text-xs mb-2">What this means</p>
+                          {m.explanation}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })()}
+              </AnimatePresence>
+
+              {/* Live heart rate — unchanged */}
+              <div className="dashboard-card p-6">
+                <p className="text-xs font-semibold text-[#F0F2F8] mb-1">Live Vitals</p>
+                <p className="text-[11px] text-[#555870] mb-4">Real-time data from your wearable</p>
+                <AppleWatchPanel />
+              </div>
             </motion.div>
 
             {/* ============ RECOMMENDED DOCTOR ============ */}
