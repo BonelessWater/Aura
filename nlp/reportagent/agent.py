@@ -74,6 +74,7 @@ async def build_system_prompt(ctx: RunContext[ReportDeps]) -> str:
         "7. Use pull_additional_research if initial evidence is insufficient for a finding.",
         "8. Use get_lab_panel_detail to drill into any biomarker that appears clinically significant.",
         f"9. You have a budget of {MAX_TOOL_CALLS} tool calls. Use them wisely.",
+        "10. Ensure that the response contains no em dashes.",
         "",
         "REPORT STRUCTURE (required sections):",
         "- executive_summary: 2-3 sentences, plain language, no jargon",

@@ -134,7 +134,19 @@ async def generate_report(person_id: str) -> MedicalResearchReport:
     report = _apply_hardening(report, result, bundle, quality, deps, person_id)
 
     # Phase 7: Delta storage (best-effort)
-    _store_to_delta(report, get_client(), person_id)
+    stored, store_error = _store_to_delta(report, get_client(), person_id)
+    if stored:
+        ThoughtStream.emit(
+            agent="Report Agent", step="store",
+            summary="Stored report in aura.reports.generated",
+            patient_id=person_id,
+        )
+    else:
+        ThoughtStream.emit(
+            agent="Report Agent", step="store",
+            summary=f"Failed to store report in Delta: {store_error}",
+            patient_id=person_id,
+        )
 
     ThoughtStream.emit(
         agent="Report Agent", step="complete",
@@ -217,25 +229,39 @@ def _apply_hardening(report, result, bundle, quality, deps, person_id):
     return report
 
 
-def _store_to_delta(report, db, person_id):
+def _store_to_delta(report, db, person_id) -> tuple[bool, str | None]:
     """
     Store report to aura.reports.generated Delta table for audit trail.
     Best-effort -- failures are logged but do not block report return.
     """
     try:
         import json
+
+        # Ensure destination exists (idempotent).
+        db.run_sql("CREATE SCHEMA IF NOT EXISTS aura.reports")
+        db.run_sql(
+            "CREATE TABLE IF NOT EXISTS aura.reports.generated ("
+            "patient_id STRING, generated_at STRING, report_json STRING"
+            ") USING DELTA"
+        )
+
         report_json = json.dumps(report.model_dump(mode="json"))
+        escaped_patient_id = person_id.replace("'", "''")
+        escaped_generated_at = report.generated_at.replace("'", "''")
+        escaped_report_json = report_json.replace("'", "''")
         sql = (
             "INSERT INTO aura.reports.generated "
             "(patient_id, generated_at, report_json) "
-            f"VALUES ('{person_id}', '{report.generated_at}', '{report_json}')"
+            f"VALUES ('{escaped_patient_id}', '{escaped_generated_at}', '{escaped_report_json}')"
         )
         db.run_sql(sql, desc=f"store report for {person_id}")
         logger.info("Report stored in Delta for %s", person_id)
+        return True, None
     except Exception as e:
         logger.warning(
             "Failed to store report in Delta for %s: %s", person_id, e
         )
+        return False, str(e)
 
 
 def _build_agent_prompt(bundle: PatientBundle, quality: dict) -> str:

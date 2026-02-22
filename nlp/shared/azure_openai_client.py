@@ -16,6 +16,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 _DOTENV_CACHE: Optional[dict[str, str]] = None
+_NO_EM_DASH_RULE = "Ensure that the response contains no em dashes."
 
 
 def _normalize_endpoint(endpoint: str) -> str:
@@ -35,6 +36,17 @@ def _flatten_content(content: Any) -> str:
                     texts.append(txt)
         return "\n".join(texts).strip()
     return ""
+
+
+def _with_no_em_dash_rule(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Ensure all Azure OpenAI calls include the no-em-dash instruction."""
+    for message in messages:
+        if message.get("role") != "system":
+            continue
+        content = message.get("content")
+        if isinstance(content, str) and _NO_EM_DASH_RULE in content:
+            return messages
+    return [{"role": "system", "content": _NO_EM_DASH_RULE}, *messages]
 
 
 def _load_dotenv_map() -> dict[str, str]:
@@ -99,7 +111,7 @@ def chat_completion(
         "Content-Type": "application/json",
     }
     payload = {
-        "messages": messages,
+        "messages": _with_no_em_dash_rule(messages),
         "max_tokens": max_tokens,
         "temperature": temperature,
     }
