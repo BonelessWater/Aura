@@ -195,13 +195,6 @@ function PipelineVisual() {
               <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full" style={{ background: step.color }} />
               {/* Step number */}
               <span className="absolute top-3 right-3 text-[10px] font-mono opacity-30 text-[#8A93B2]">0{i + 1}</span>
-              {/* Icon */}
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ background: `${step.color}18`, color: step.color }}
-              >
-                {step.icon}
-              </div>
               {/* Label */}
               <div>
                 <div className="font-medium text-[#F0F2F8] text-sm">{step.label}</div>
@@ -250,6 +243,9 @@ export const Present = () => {
     <div className="relative min-h-screen text-[#F0F2F8] font-sans overflow-x-hidden">
       <Navbar />
 
+      {/* Glass pane — frosted layer over blood cell background for readability */}
+      <div className="fixed inset-0 pointer-events-none z-[1] backdrop-blur-md bg-[#020005]/35" />
+
       {/* Scroll progress bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 z-[200] h-[2px] origin-left"
@@ -265,10 +261,12 @@ export const Present = () => {
         allow="fullscreen"
       />
 
+      <div className="relative z-[2]">
       {/* ── 1. HERO ──────────────────────────────────────────────────────── */}
       <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(123,97,255,0.08) 0%, transparent 70%)'
+          background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(123,97,255,0.08) 0%, transparent 70%)',
+          filter: 'blur(30px)',
         }} />
         <FadeIn className="relative z-10 max-w-4xl">
           <SectionLabel>Golden Byte 2026 · Aura</SectionLabel>
@@ -280,7 +278,7 @@ export const Present = () => {
             <br />Ends Now.
           </h1>
           <p className="text-lg md:text-xl text-[#8A93B2] max-w-2xl mx-auto leading-relaxed mb-10">
-            Autoimmune diseases affect <span className="text-[#F0F2F8]">50 million Americans</span> — yet the
+            Autoimmune diseases affect <span className="text-[#F0F2F8]">50 million Americans</span>, yet the
             average patient waits <span className="text-[#F0F2F8]">4–7 years</span> and sees{' '}
             <span className="text-[#F0F2F8]">4–6 doctors</span> before a correct diagnosis.
             Aura changes that with AI and routine labs.
@@ -372,12 +370,12 @@ export const Present = () => {
               </h2>
               <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
                 We harmonized 48,503 de-identified patient records across NHANES (73.6%), Harvard
-                Dataverse (24.8%), and supplementary clinical data — spanning CBC panels, inflammatory
+                Dataverse (24.8%), and supplementary clinical data: spanning CBC panels, inflammatory
                 markers, demographics, and multi-visit trajectories.
               </p>
             </FadeIn>
             <FadeIn delay={0.1}>
-              <div className="grid grid-cols-2 gap-3 mt-2">
+              <div className="flex flex-col gap-3 mt-2">
                 {[
                   { label: 'Healthy', n: '32,706', color: '#52D0A0' },
                   { label: 'Systemic Autoimmune', n: '13,030', color: '#7B61FF' },
@@ -386,11 +384,11 @@ export const Present = () => {
                 ].map((c) => (
                   <div
                     key={c.label}
-                    className="p-3 rounded-lg border border-white/5 bg-[#13161F]/65"
+                    className="px-5 py-4 rounded-lg border border-white/5 bg-[#13161F]/80 flex items-center gap-6 w-full"
                     style={{ borderLeftColor: c.color, borderLeftWidth: 3 }}
                   >
-                    <div className="font-mono text-lg" style={{ color: c.color }}>{c.n}</div>
-                    <div className="text-[#8A93B2] text-xs">{c.label}</div>
+                    <div className="font-mono text-2xl font-light" style={{ color: c.color }}>{c.n}</div>
+                    <div className="text-[#8A93B2] text-sm">{c.label}</div>
                   </div>
                 ))}
               </div>
@@ -399,7 +397,7 @@ export const Present = () => {
           <FadeIn delay={0.15}>
             <WideChartCard
               src="/figures/01_demographics.png"
-              caption="48,503 patients across 4 disease clusters — age and sex breakdown"
+              caption="48,503 patients across 4 disease clusters: age and sex breakdown"
             />
           </FadeIn>
         </div>
@@ -426,34 +424,38 @@ export const Present = () => {
             <PipelineVisual />
           </FadeIn>
 
-          {/* Feature importance + AUC metrics */}
-          <div className="grid md:grid-cols-2 gap-10 mb-10">
+          {/* Feature importance + ROC curves */}
+          <div className="grid md:grid-cols-2 gap-10 mb-6">
             <FadeIn delay={0.1}>
               <ChartCard
                 src="/figures/08_feature_importance.png"
-                caption="Feature importance (gain) — CRP and ESR dominate, confirming inflammation markers as key signals"
+                caption="Feature importance (gain): CRP and ESR dominate, confirming inflammation markers as key signals"
               />
             </FadeIn>
             <FadeIn delay={0.2}>
               <ChartCard
                 src="/figures/07_roc_curves.png"
-                caption="ROC curves by disease cluster — Systemic AUC 0.963, Healthy AUC 0.933"
+                caption="ROC curves by disease cluster: Systemic AUC 0.963, Healthy AUC 0.933"
               />
-              <div className="grid grid-cols-4 gap-2 mt-4">
-                {[
-                  { label: 'Systemic', val: '0.963', color: '#7B61FF' },
-                  { label: 'Healthy', val: '0.933', color: '#52D0A0' },
-                  { label: 'Endocrine', val: '0.880', color: '#F4A261' },
-                  { label: 'Overall', val: '0.897', color: '#3ECFCF' },
-                ].map((m) => (
-                  <div key={m.label} className="p-3 rounded-xl border border-white/5 bg-[#13161F]/65 text-center">
-                    <div className="font-mono text-xl font-light" style={{ color: m.color }}>{m.val}</div>
-                    <div className="text-[#8A93B2] text-[10px] mt-0.5">{m.label}</div>
-                  </div>
-                ))}
-              </div>
             </FadeIn>
           </div>
+
+          {/* AUC metrics — full-width, each taking one quarter */}
+          <FadeIn delay={0.15} className="mb-10">
+            <div className="grid grid-cols-4 gap-4">
+              {[
+                { label: 'Systemic', val: '0.963', color: '#7B61FF' },
+                { label: 'Healthy', val: '0.933', color: '#52D0A0' },
+                { label: 'Endocrine', val: '0.880', color: '#F4A261' },
+                { label: 'Overall', val: '0.897', color: '#3ECFCF' },
+              ].map((m) => (
+                <div key={m.label} className="p-5 rounded-xl border border-white/5 bg-[#13161F]/80 text-center">
+                  <div className="font-mono text-3xl font-light mb-1" style={{ color: m.color }}>{m.val}</div>
+                  <div className="text-[#8A93B2] text-xs tracking-widest uppercase">{m.label}</div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
 
           {/* Model comparison — wide, full-width */}
           <FadeIn delay={0.1}>
@@ -532,13 +534,12 @@ export const Present = () => {
             </p>
           </FadeIn>
 
-          <div className="grid md:grid-cols-2 gap-12 items-start">
-            <FadeIn delay={0.1}>
-              <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid md:grid-cols-2 gap-12 items-stretch">
+            <FadeIn delay={0.1} className="flex flex-col">
+              <div className="text-center mb-6">
                 <StatCounter value={2059} prefix="$" label="Saved per healthy patient" color="#F4A261" duration={2000} />
-                <StatCounter value={707} prefix="$" label="Saved per systemic patient" color="#7B61FF" duration={1600} />
               </div>
-              <div className="p-5 rounded-2xl border border-[#3ECFCF]/15 bg-[#13161F]/65 backdrop-blur-md mb-4">
+              <div className="flex-1 p-5 rounded-2xl border border-[#3ECFCF]/15 bg-[#13161F]/80 backdrop-blur-md">
                 <h3 className="text-[#3ECFCF] font-medium mb-3 text-sm tracking-wide uppercase">At National Scale</h3>
                 <div className="space-y-3 text-[#8A93B2]">
                   {[
@@ -559,14 +560,17 @@ export const Present = () => {
               </div>
             </FadeIn>
 
-            <FadeIn delay={0.2}>
-              <div className="p-5 rounded-2xl border border-[#7B61FF]/15 bg-[#13161F]/65 backdrop-blur-md">
+            <FadeIn delay={0.2} className="flex flex-col">
+              <div className="text-center mb-6">
+                <StatCounter value={707} prefix="$" label="Saved per systemic patient" color="#7B61FF" duration={1600} />
+              </div>
+              <div className="flex-1 p-5 rounded-2xl border border-[#7B61FF]/15 bg-[#13161F]/80 backdrop-blur-md">
                 <h3 className="text-[#7B61FF] font-medium mb-3 text-sm tracking-wide uppercase">Beyond Cost</h3>
                 <div className="space-y-3 text-[#8A93B2] text-sm">
                   {[
                     'Earlier treatment prevents irreversible organ damage',
                     'Reduces diagnostic odyssey and patient mental burden',
-                    'Works from routine labs — no new tests required',
+                    'Works from routine labs, no new tests required',
                     'Equitable across age groups and both sexes',
                     'SOAP note generation ready for clinical workflow',
                   ].map((t) => (
@@ -603,7 +607,7 @@ export const Present = () => {
           <FadeIn delay={0.05} className="mb-10">
             <WideChartCard
               src="/figures/01_source_distribution.png"
-              caption="Data sources: NHANES (73.6%) and Harvard Dataverse (24.8%) — cluster distribution varies meaningfully by source"
+              caption="Data sources: NHANES (73.6%) and Harvard Dataverse (24.8%), cluster distribution varies meaningfully by source"
             />
           </FadeIn>
 
@@ -619,7 +623,7 @@ export const Present = () => {
           <FadeIn delay={0.1} className="mb-10">
             <WideChartCard
               src="/figures/05_zscore_analysis.png"
-              caption="Z-score distributions — normalization reveals population-level deviations per cluster"
+              caption="Z-score distributions: normalization reveals population-level deviations per cluster"
             />
           </FadeIn>
 
@@ -628,7 +632,7 @@ export const Present = () => {
             <div className="max-w-3xl mx-auto">
               <ChartCard
                 src="/figures/02_feature_correlation.png"
-                caption="Feature correlation matrix — Hemoglobin/Hematocrit tightly correlated (0.95); CRP and ESR independently informative"
+                caption="Feature correlation matrix: Hemoglobin/Hematocrit tightly correlated (0.95), CRP and ESR independently informative"
               />
             </div>
           </FadeIn>
@@ -639,7 +643,7 @@ export const Present = () => {
               {[
                 {
                   title: 'CRP & ESR are independent',
-                  desc: 'Low correlation between each other despite both being inflammation markers — the model benefits from both.',
+                  desc: 'Low correlation between each other despite both being inflammation markers. The model benefits from both.',
                   color: '#7B61FF',
                 },
                 {
@@ -649,7 +653,7 @@ export const Present = () => {
                 },
                 {
                   title: 'Neutrophil ↔ Lymphocyte: r = −0.84',
-                  desc: 'Strong inverse relationship reflects the classic inflammatory shift — a key biomarker pattern for autoimmune detection.',
+                  desc: 'Strong inverse relationship reflects the classic inflammatory shift, a key biomarker pattern for autoimmune detection.',
                   color: '#F4A261',
                 },
               ].map((item) => (
@@ -672,7 +676,8 @@ export const Present = () => {
       {/* ── 8. CLOSING CTA ───────────────────────────────────────────────── */}
       <section className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-24 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(62,207,207,0.07) 0%, transparent 70%)'
+          background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(62,207,207,0.07) 0%, transparent 30%)',
+          filter: 'blur(30px)',
         }} />
         <FadeIn className="relative z-10 max-w-3xl">
           <SectionLabel>Aura · Golden Byte 2026</SectionLabel>
@@ -716,6 +721,7 @@ export const Present = () => {
         </FadeIn>
       </section>
 
+      </div>{/* end z-[2] content wrapper */}
     </div>
   );
 };
