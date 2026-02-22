@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router';
+import { useHealth } from '../../../api/hooks/useHealth';
 
 /** Generative abstract avatar SVG based on a seed string */
 const GenerativeAvatar = ({ seed, size = 36 }: { seed: string; size?: number }) => {
@@ -26,6 +27,7 @@ const GenerativeAvatar = ({ seed, size = 36 }: { seed: string; size?: number }) 
 export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isError: backendDown } = useHealth();
 
   const isHome = location.pathname === '/';
   const isVault = location.pathname === '/vault';
@@ -58,8 +60,11 @@ export const Navbar = () => {
           }`}
       >
         <GenerativeAvatar seed="aura_user_42" size={36} />
-        {/* Online indicator */}
-        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#52D0A0] rounded-full border-2 border-[#0A0D14]" />
+        {/* Backend connection indicator: green = up, red = unreachable */}
+        <span
+          className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0A0D14] ${backendDown ? 'bg-red-500' : 'bg-[#52D0A0]'}`}
+          title={backendDown ? 'Backend unreachable' : 'Backend connected'}
+        />
       </button>
     </motion.nav>
   );

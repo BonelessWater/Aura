@@ -1,13 +1,25 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'motion/react';
-import { Camera, PlayCircle } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { Camera, CheckCircle2 } from 'lucide-react';
+import { Button } from '../../ui/button';
+import { usePatientStore } from '../../../../api/hooks/usePatientStore';
 
 interface StepVisionProps {
   onComplete: () => void;
 }
 
 export const StepVision = ({ onComplete }: StepVisionProps) => {
+  const images = usePatientStore((s) => s.images);
+  const setImages = usePatientStore((s) => s.setImages);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files;
+    if (!selected) return;
+    setImages([...images, ...Array.from(selected)]);
+    e.target.value = '';
+  };
+
   return (
     <motion.div
       key="step3"
@@ -20,20 +32,38 @@ export const StepVision = ({ onComplete }: StepVisionProps) => {
         Add visual context
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-        <button className="h-40 bg-[#1A1D26] border border-[#2A2E3B] rounded-xl flex flex-col items-center justify-center gap-4 hover:border-[#7B61FF] hover:bg-[#7B61FF]/5 transition-all group">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/heic"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      <div className="w-full max-w-2xl">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full h-40 bg-[#1A1D26] border border-[#2A2E3B] rounded-xl flex flex-col items-center justify-center gap-4 hover:border-[#7B61FF] hover:bg-[#7B61FF]/5 transition-all group"
+        >
           <div className="w-12 h-12 rounded-full bg-[#7B61FF]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Camera className="w-6 h-6 text-[#7B61FF]" />
           </div>
-          <span className="font-medium">Take Photo</span>
+          <span className="font-medium">Upload Photo</span>
+          <span className="text-xs text-[#8A93B2]/60">JPG, PNG, or HEIC</span>
         </button>
 
-        <button className="h-40 bg-[#1A1D26] border border-[#2A2E3B] rounded-xl flex flex-col items-center justify-center gap-4 hover:border-[#3ECFCF] hover:bg-[#3ECFCF]/5 transition-all group">
-          <div className="w-12 h-12 rounded-full bg-[#3ECFCF]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <PlayCircle className="w-6 h-6 text-[#3ECFCF]" />
+        {/* Show selected images */}
+        {images.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {images.map((img, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-[#1A1D26] border border-[#2A2E3B] rounded-lg">
+                <CheckCircle2 className="w-4 h-4 text-[#3ECFCF] flex-shrink-0" />
+                <span className="text-sm text-[#F0F2F8] truncate">{img.name}</span>
+              </div>
+            ))}
           </div>
-          <span className="font-medium">Record Video</span>
-        </button>
+        )}
       </div>
 
       <motion.div

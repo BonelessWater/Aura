@@ -3,6 +3,8 @@ import { IntakeLayout } from './IntakeLayout';
 import { StepUpload } from './steps/StepUpload';
 import { StepSymptoms } from './steps/StepSymptoms';
 import { StepVision } from './steps/StepVision';
+import { useExtract } from '../../../api/hooks/useExtract';
+import { usePatientStore } from '../../../api/hooks/usePatientStore';
 
 interface IntakeWizardProps {
   onComplete: () => void;
@@ -35,9 +37,14 @@ export const IntakeWizard = ({ onComplete }: IntakeWizardProps) => {
   const [step, setStep] = useState(1);
   const [files, setFiles] = useState<{ name: string; status: 'parsing' | 'done' | 'error'; errorMsg?: string }[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [symptoms, setSymptoms] = useState('');
-  const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const extractMutation = useExtract();
+  const setPdfs = usePatientStore((s) => s.setPdfs);
+  const patientAge = usePatientStore((s) => s.patientAge);
+  const setPatientAge = usePatientStore((s) => s.setPatientAge);
+  const patientSex = usePatientStore((s) => s.patientSex);
+  const setPatientSex = usePatientStore((s) => s.setPatientSex);
 
   const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
   const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -47,7 +54,7 @@ export const IntakeWizard = ({ onComplete }: IntakeWizardProps) => {
     else onComplete();
   };
 
-  const validateAndAddFile = (file: File) => {
+  const validateAndAddFile = async (file: File) => {
     setFileError(null);
     if (!ALLOWED_TYPES.includes(file.type)) {
       setFileError(`"${file.name}" is not a supported file type. Please upload a PDF, JPG, or PNG.`);
@@ -63,9 +70,21 @@ export const IntakeWizard = ({ onComplete }: IntakeWizardProps) => {
     }
     const entry = { name: file.name, status: 'parsing' as const };
     setFiles(prev => [...prev, entry]);
-    setTimeout(() => {
-      setFiles(prev => prev.map(f => f.name === file.name && f.status === 'parsing' ? { ...f, status: 'done' } : f));
-    }, 1200);
+    try {
+      await extractMutation.mutateAsync([file]);
+      setFiles(prev =>
+        prev.map(f => f.name === file.name && f.status === 'parsing' ? { ...f, status: 'done' } : f)
+      );
+      // Store File object in Zustand for the full pipeline dispatch
+      const currentPdfs = usePatientStore.getState().pdfs;
+      setPdfs([...currentPdfs, file]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFiles(prev =>
+        prev.map(f => f.name === file.name && f.status === 'parsing' ? { ...f, status: 'error', errorMsg: msg } : f)
+      );
+      setFileError(msg);
+    }
   };
 
   const handleFileUpload = () => fileInputRef.current?.click();
@@ -84,12 +103,6 @@ export const IntakeWizard = ({ onComplete }: IntakeWizardProps) => {
     Array.from(dropped).forEach(validateAndAddFile);
   };
 
-  const toggleChip = (chip: string) => {
-    setSelectedChips(prev =>
-      prev.includes(chip) ? prev.filter(c => c !== chip) : [...prev, chip]
-    );
-  };
-
   const { greeting, tip } = NARRATION[step];
 
   return (
@@ -100,27 +113,51 @@ export const IntakeWizard = ({ onComplete }: IntakeWizardProps) => {
       tip={tip}
     >
       {step === 1 && (
-        <StepUpload
-          files={files}
-          fileError={fileError}
-          fileInputRef={fileInputRef}
-          onFileChange={handleFileChange}
-          onFileUpload={handleFileUpload}
-          onDrop={handleDrop}
-          onClearError={() => setFileError(null)}
-          onNext={handleNext}
-          onSkipToSymptoms={() => { setFileError(null); setStep(2); }}
-        />
+        <>
+          {/* Demographics — age and sex, stored in Zustand for pipeline dispatch */}
+          <div className="flex gap-4 w-full max-w-lg mb-4">
+            <div className="flex-1">
+              <label className="block text-xs text-[#8A93B2] mb-1">Age</label>
+              <input
+                type="number"
+                min={1}
+                max={120}
+                value={patientAge}
+                onChange={(e) => setPatientAge(Number(e.target.value))}
+                className="w-full bg-[#0A0D14] border border-[#2A2E3B] rounded-lg px-3 py-2 text-sm text-[#F0F2F8] focus:border-[#7B61FF] focus:outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-[#8A93B2] mb-1">Biological sex</label>
+              <select
+                value={patientSex}
+                onChange={(e) => setPatientSex(e.target.value)}
+                className="w-full bg-[#0A0D14] border border-[#2A2E3B] rounded-lg px-3 py-2 text-sm text-[#F0F2F8] focus:border-[#7B61FF] focus:outline-none"
+              >
+                <option value="F">Female</option>
+                <option value="M">Male</option>
+                <option value="O">Other / prefer not to say</option>
+              </select>
+            </div>
+          </div>
+
+          <StepUpload
+            files={files}
+            fileError={fileError}
+            fileInputRef={fileInputRef}
+            onFileChange={handleFileChange}
+            onFileUpload={handleFileUpload}
+            onDrop={handleDrop}
+            onClearError={() => setFileError(null)}
+            onNext={handleNext}
+            onSkipToSymptoms={() => { setFileError(null); setStep(2); }}
+            isPending={extractMutation.isPending}
+          />
+        </>
       )}
 
       {step === 2 && (
-        <StepSymptoms
-          symptoms={symptoms}
-          onSymptomsChange={setSymptoms}
-          selectedChips={selectedChips}
-          onToggleChip={toggleChip}
-          onNext={handleNext}
-        />
+        <StepSymptoms onNext={handleNext} />
       )}
 
       {step === 3 && (

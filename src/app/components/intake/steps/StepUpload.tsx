@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Upload, Check, FileText } from 'lucide-react';
-import { Button } from '../../ui/Button';
+import { Button } from '../../ui/button';
 import { ErrorCard } from '../../shared/ErrorCard';
 
 interface StepUploadProps {
@@ -14,12 +14,14 @@ interface StepUploadProps {
   onClearError: () => void;
   onNext: () => void;
   onSkipToSymptoms: () => void;
+  isPending?: boolean;
 }
 
 export const StepUpload = ({
   files, fileError, fileInputRef,
   onFileChange, onFileUpload, onDrop,
   onClearError, onNext, onSkipToSymptoms,
+  isPending = false,
 }: StepUploadProps) => {
   const doneCount = files.filter(f => f.status === 'done').length;
 
@@ -47,10 +49,10 @@ export const StepUpload = ({
         onChange={onFileChange}
       />
       <div
-        onClick={onFileUpload}
+        onClick={isPending ? undefined : onFileUpload}
         onDragOver={(e) => e.preventDefault()}
-        onDrop={onDrop}
-        className="w-full max-w-lg h-56 border-2 border-dashed border-[#7B61FF]/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#7B61FF]/8 hover:border-[#7B61FF]/50 hover:scale-[1.01] transition-all duration-300 group relative overflow-hidden bg-[#0A0D14]/50"
+        onDrop={isPending ? undefined : onDrop}
+        className={`w-full max-w-lg h-56 border-2 border-dashed border-[#7B61FF]/20 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#7B61FF]/8 hover:border-[#7B61FF]/50 hover:scale-[1.01] transition-all duration-300 group relative overflow-hidden bg-[#0A0D14]/50 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
       >
         <motion.div
           animate={{ y: [0, -10, 0] }}
@@ -95,7 +97,10 @@ export const StepUpload = ({
                 </div>
                 <div>
                   <span className="text-sm font-medium">{file.name}</span>
-                  {file.status === 'parsing' && <span className="block text-xs text-[#8A93B2]">Parsing…</span>}
+                  {file.status === 'parsing' && <span className="block text-xs text-[#8A93B2]">Uploading…</span>}
+                  {file.status === 'error' && (
+                    <span className="block text-xs text-red-400">{file.errorMsg ?? 'Upload failed'}</span>
+                  )}
                 </div>
               </div>
               {file.status === 'done' && (

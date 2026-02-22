@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 // Icons removed — trust chips no longer shown
 
 export const Hero = ({ onStart }: { onStart: () => void }) => {

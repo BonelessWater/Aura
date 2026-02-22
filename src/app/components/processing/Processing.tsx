@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { FileText, Search, Activity, PenTool, CheckCircle2 } from 'lucide-react';
+import { FileText, Search, Activity, PenTool, CheckCircle2, AlertCircle } from 'lucide-react';
+import { usePipeline } from '../../../api/hooks/usePipeline';
+import { useJobStatus } from '../../../api/hooks/useJobStatus';
+import { usePatientStore } from '../../../api/hooks/usePatientStore';
+import { usePipelineStream } from '../../../api/hooks/usePipelineStream';
 
 interface ProcessingProps {
   onComplete: () => void;
@@ -22,33 +26,88 @@ const MONITOR_POSITIONS = [
   { top: '44%', left: '74%', width: '16%' },
 ];
 
+const STEPS = [
+  { icon: FileText, label: "Parsing & Translating Files"        },
+  { icon: Search,   label: "Searching 180,000 PubMed Abstracts" },
+  { icon: Activity, label: "Scoring Alignment"                  },
+  { icon: PenTool,  label: "Drafting Documents"                 },
+];
+
+/** Maps backend pipeline phase names to the 0-based UI step index. */
+export function eventToStepIndex(phase: string): number {
+  switch (phase) {
+    case 'extract':   return 0;
+    case 'interview': return 1;
+    case 'research':  return 1;
+    case 'route':     return 2;
+    case 'translate': return 3;
+    default:          return 0;
+  }
+}
+
 export const Processing = ({ onComplete }: ProcessingProps) => {
+  const dispatched = useRef(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [subLabel, setSubLabel] = useState<string>('');
 
-  const steps = [
-    { icon: FileText, label: "Parsing & Translating Files",        duration: 1500 },
-    { icon: Search,   label: "Searching 180,000 PubMed Abstracts", duration: 2000 },
-    { icon: Activity, label: "Scoring Alignment",                  duration: 1800 },
-    { icon: PenTool,  label: "Drafting Documents",                 duration: 1200 },
-  ];
+  const pipelineMutation = usePipeline();
+  const jobId = usePatientStore((s) => s.jobId);
+  const patientId = usePatientStore((s) => s.patientId);
+  const pipelineStatus = usePatientStore((s) => s.pipelineStatus);
+  const setPipelineStatus = usePatientStore((s) => s.setPipelineStatus);
 
-  useEffect(() => {
-    let currentStep = 0;
-    const processStep = () => {
-      if (currentStep >= steps.length) {
-        setTimeout(onComplete, 800);
-        return;
-      }
-      setActiveStep(currentStep);
+  const { data: jobData } = useJobStatus(jobId);
+
+  // SSE: primary real-time step driver (polling is fallback)
+  usePipelineStream({
+    patientId,
+    onStepChange: setActiveStep,
+    onSubLabel: setSubLabel,
+    onDone: () => {
+      setActiveStep(STEPS.length - 1);
       setTimeout(() => {
-        currentStep++;
-        processStep();
-      }, steps[currentStep].duration);
-    };
-    processStep();
+        setPipelineStatus('done');
+        onComplete();
+      }, 800);
+    },
+    onStreamError: () => {
+      // SSE error: fall back to polling (useJobStatus still runs)
+    },
+  });
+
+  // Dispatch the pipeline exactly once on mount
+  useEffect(() => {
+    if (dispatched.current) return;
+    dispatched.current = true;
+    setPipelineStatus('uploading');
+    pipelineMutation.mutateAsync().catch(() => {
+      // Error is stored in Zustand by the mutation's onError handler
+    });
   }, []);
 
-  const progress = ((activeStep + 1) / steps.length) * 100;
+  // Polling fallback: advance step and detect completion when SSE is unavailable
+  useEffect(() => {
+    if (!jobData) return;
+
+    if (jobData.status === 'done') {
+      setActiveStep(STEPS.length - 1);
+      setTimeout(() => {
+        setPipelineStatus('done');
+        onComplete();
+      }, 800);
+      return;
+    }
+
+    if (jobData.status === 'running') {
+      const interval = setInterval(() => {
+        setActiveStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [jobData?.status]);
+
+  const isError = pipelineStatus === 'error' || jobData?.status === 'error';
+  const progress = ((activeStep + 1) / STEPS.length) * 100;
 
   return (
     <div className="relative flex items-center justify-center min-h-screen w-full overflow-hidden">
@@ -74,6 +133,29 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
         animate={{ y: ['-100%', '100%'] }}
         transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
       />
+
+      {/* ── Error state ── */}
+      {isError && (
+        <div className="absolute z-20 inset-0 flex items-center justify-center bg-black/50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#1A1D26] border border-red-500/30 rounded-2xl p-8 max-w-md text-center"
+          >
+            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h3 className="text-xl font-display text-white mb-2">Analysis Failed</h3>
+            <p className="text-[#8A93B2] text-sm mb-6">
+              {jobData?.error ?? 'An error occurred during processing. Please try again.'}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-[#7B61FF] text-white rounded-xl font-medium hover:bg-[#6B51EF] transition-colors"
+            >
+              Start Over
+            </button>
+          </motion.div>
+        </div>
+      )}
 
       {/* ── CENTER — title + overall progress ── */}
       <div
@@ -126,7 +208,7 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
       </div>
 
       {/* ── 4 MONITORS — one step per monitor ── */}
-      {steps.map((step, index) => {
+      {STEPS.map((step, index) => {
         const Icon = step.icon;
         const pos = MONITOR_POSITIONS[index];
         const status =
@@ -199,6 +281,12 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
             >
               {step.label}
             </span>
+            {/* Sub-label from real SSE detail/summary */}
+            {status === 'active' && subLabel && (
+              <span className="text-[8px] text-[#3ECFCF]/70 font-mono mt-0.5 text-center truncate w-full px-1">
+                {subLabel}
+              </span>
+            )}
 
             {/* Neon progress bar */}
             <div className="h-1 w-full mt-2 rounded-full overflow-hidden bg-white/10">
@@ -220,11 +308,11 @@ export const Processing = ({ onComplete }: ProcessingProps) => {
                     status === 'completed'
                       ? '100%'
                       : status === 'active'
-                        ? '100%'
+                        ? '70%'
                         : '0%',
                 }}
                 transition={{
-                  duration: status === 'active' ? step.duration / 1000 : 0.5,
+                  duration: status === 'active' ? 3 : 0.5,
                   ease: 'linear',
                 }}
               />

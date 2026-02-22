@@ -10,6 +10,7 @@ export const Layout = () => {
   return (
     <>
       {!isClinicianPortal && <Background />}
+      {!isClinicianPortal && <Navbar />}
       <Outlet />
     </>
   );

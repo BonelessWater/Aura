@@ -2,23 +2,23 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Button } from '../../ui/Button';
+import { Button } from '../../ui/button';
+import { usePatientStore } from '../../../../api/hooks/usePatientStore';
 
 interface StepSymptomsProps {
-  symptoms: string;
-  onSymptomsChange: (value: string) => void;
-  selectedChips: string[];
-  onToggleChip: (chip: string) => void;
   onNext: () => void;
 }
 
 const chips = ["Fatigue", "Joint Pain", "Rash", "Brain Fog", "GI Issues"];
 
-export const StepSymptoms = ({
-  symptoms, onSymptomsChange,
-  selectedChips, onToggleChip,
-  onNext,
-}: StepSymptomsProps) => {
+export const StepSymptoms = ({ onNext }: StepSymptomsProps) => {
+  const symptoms = usePatientStore((s) => s.symptoms);
+  const setSymptoms = usePatientStore((s) => s.setSymptoms);
+  const selectedChips = usePatientStore((s) => s.selectedChips);
+  const toggleChip = usePatientStore((s) => s.toggleChip);
+  const medications = usePatientStore((s) => s.medications);
+  const setMedications = usePatientStore((s) => s.setMedications);
+
   return (
     <motion.div
       key="step2"
@@ -34,7 +34,7 @@ export const StepSymptoms = ({
       <div className="w-full max-w-2xl">
         <textarea
           value={symptoms}
-          onChange={(e) => onSymptomsChange(e.target.value)}
+          onChange={(e) => setSymptoms(e.target.value)}
           placeholder="When did it start? Does it come and go? What makes it worse?"
           className="w-full h-48 bg-[#0A0D14] border border-[#2A2E3B] rounded-xl p-6 text-[#F0F2F8] focus:border-[#7B61FF] focus:outline-none resize-none placeholder:text-[#8A93B2]/40 text-lg leading-relaxed"
         />
@@ -43,7 +43,7 @@ export const StepSymptoms = ({
           {chips.map((chip) => (
             <button
               key={chip}
-              onClick={() => onToggleChip(chip)}
+              onClick={() => toggleChip(chip)}
               className={clsx(
                 "px-4 py-2 rounded-full border transition-all flex items-center gap-2",
                 selectedChips.includes(chip)
@@ -59,6 +59,20 @@ export const StepSymptoms = ({
               {chip}
             </button>
           ))}
+        </div>
+
+        {/* Medications input */}
+        <div className="mt-6">
+          <label className="block text-sm text-[#8A93B2] mb-2">
+            Current medications <span className="text-[#8A93B2]/50">(comma-separated, optional)</span>
+          </label>
+          <input
+            type="text"
+            value={medications}
+            onChange={(e) => setMedications(e.target.value)}
+            placeholder="e.g. Metformin, Lisinopril"
+            className="w-full bg-[#0A0D14] border border-[#2A2E3B] rounded-xl px-5 py-3 text-[#F0F2F8] focus:border-[#7B61FF] focus:outline-none placeholder:text-[#8A93B2]/40"
+          />
         </div>
       </div>
 

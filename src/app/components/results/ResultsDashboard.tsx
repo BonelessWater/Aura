@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Button } from '../ui/Button';
-import { 
-  Menu, X, Home, FileText, Users, MapPin, 
+import { Button } from '../ui/button';
+import {
+  Menu, X, Home, FileText, Users, MapPin,
   ChevronRight, Check, Copy, AlertCircle, Info,
   Settings, BarChart3, MessageSquare, Compass, BookOpen
 } from 'lucide-react';
@@ -11,11 +11,13 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { useNavigate } from 'react-router';
 import { DailyNotes } from './DailyNotes';
 import { DoctorHoverHelper } from './DoctorHoverHelper';
+import { SOAPNote } from './SOAPNote';
+import { useResults } from '../../../api/hooks/useResults';
 
 interface ResultsDashboardProps {
-  onViewSOAP: () => void;
-  onViewSpecialists: () => void;
-  onViewCommunity: () => void;
+  onViewSOAP?: () => void;
+  onViewSpecialists?: () => void;
+  onViewCommunity?: () => void;
 }
 
 const ArcGauge = ({ score, label, color, delay = 0, small = false }: { score: number; label: string; color: string; delay?: number; small?: boolean }) => {
@@ -71,9 +73,32 @@ const ArcGauge = ({ score, label, color, delay = 0, small = false }: { score: nu
 export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunity }: ResultsDashboardProps) => {
   const [copied, setCopied] = useState(false);
   const [activeSection, setActiveSection] = useState('scores');
+  const [soapOpen, setSoapOpen] = useState(false);
   const navigate = useNavigate();
   const mainRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const { data: results, isLoading: resultsLoading } = useResults();
+
+  // Real scores from pipeline; fall back to null (shows skeleton)
+  const alignmentScore = results?.router_output?.cluster_alignment_score != null
+    ? Math.round(results.router_output.cluster_alignment_score * 100)
+    : null;
+
+  const topCandidate = results?.router_output?.disease_candidates?.[0];
+  const candidateScore = topCandidate?.disease_alignment_score != null
+    ? Math.round(topCandidate.disease_alignment_score * 100)
+    : null;
+  const candidateLabel = topCandidate?.disease ?? 'Top Pattern';
+
+  const soapNote = results?.translator_output?.soap_note ?? null;
+  const laymanCompass = results?.translator_output?.layman_compass ?? null;
+
+  // Routing: use callback prop if provided (App-level modal), else open internal modal
+  const handleViewSOAP = () => {
+    if (onViewSOAP) onViewSOAP();
+    else setSoapOpen(true);
+  };
 
   const handleCopy = () => {
     navigator.clipboard?.writeText("I've been tracking my symptoms for over a year. My blood work shows a sustained rise in inflammatory markers, and I've developed a recurring facial rash and joint pain. Here is a clinical summary generated from my lab trends and photos.");
@@ -113,7 +138,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
     { id: 'translation', icon: Compass, label: "Translation", scrollTo: 'translation' },
     { id: 'next-steps', icon: MessageSquare, label: "Next Steps", scrollTo: 'next-steps' },
     { id: 'daily-notes', icon: BookOpen, label: "Daily Notes", scrollTo: 'daily-notes' },
-    { id: 'soap', icon: FileText, label: "SOAP Note", onClick: onViewSOAP },
+    { id: 'soap', icon: FileText, label: "SOAP Note", onClick: handleViewSOAP },
     { id: 'specialists', icon: MapPin, label: "Specialists", onClick: onViewSpecialists },
     { id: 'community', icon: Users, label: "Community", onClick: onViewCommunity },
     { id: 'vault', icon: Settings, label: "The Vault", href: "/vault" },
@@ -122,7 +147,10 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
   return (
     <Tooltip.Provider>
       <div ref={wrapperRef} className="flex h-screen bg-[#0A0D14] overflow-hidden relative">
-        <DoctorHoverHelper containerRef={wrapperRef} />
+        <DoctorHoverHelper boxRef={wrapperRef} />
+
+        {/* Internal SOAP Note modal (used when no onViewSOAP prop is provided) */}
+        <SOAPNote isOpen={soapOpen} onClose={() => setSoapOpen(false)} soapNote={soapNote} />
         
         {/* Sidebar */}
         <div className="w-20 lg:w-[300px] border-r border-[#1A1D26] flex flex-col bg-[#0A0D14] z-20">
@@ -164,7 +192,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
             <div id="scores" className="scroll-target grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Score Card 1 */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-[#13161F] border border-[#2A2E3B] rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden"
@@ -172,22 +200,41 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
                 <div className="absolute top-0 right-0 p-4">
                   <Info className="w-4 h-4 text-[#8A93B2]" />
                 </div>
-                <ArcGauge score={92} label="Systemic Autoimmune Alignment" color="#7B61FF" delay={0.2} />
+                {resultsLoading || alignmentScore === null ? (
+                  <div className="w-[120px] h-[120px] rounded-full bg-[#1A1D26] animate-pulse" />
+                ) : (
+                  <ArcGauge
+                    score={alignmentScore}
+                    label={`${results?.router_output?.cluster ?? 'Systemic'} Alignment`}
+                    color="#7B61FF"
+                    delay={0.2}
+                  />
+                )}
               </motion.div>
 
               {/* Score Card 2 */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="bg-[#13161F] border border-[#2A2E3B] rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden"
               >
-                 <div className="absolute bottom-4 left-0 right-0 text-center">
-                    <span className="text-xs text-[#E07070] bg-[#E07070]/10 px-2 py-1 rounded">
-                      This is a pattern match, not a diagnosis.
-                    </span>
-                 </div>
-                 <ArcGauge score={65} label="SLE Pattern Similarity" color="#F4A261" delay={0.4} small />
+                <div className="absolute bottom-4 left-0 right-0 text-center">
+                  <span className="text-xs text-[#E07070] bg-[#E07070]/10 px-2 py-1 rounded">
+                    This is a pattern match, not a diagnosis.
+                  </span>
+                </div>
+                {resultsLoading || candidateScore === null ? (
+                  <div className="w-[80px] h-[80px] rounded-full bg-[#1A1D26] animate-pulse" />
+                ) : (
+                  <ArcGauge
+                    score={candidateScore}
+                    label={`${candidateLabel} Pattern Similarity`}
+                    color="#F4A261"
+                    delay={0.4}
+                    small
+                  />
+                )}
               </motion.div>
             </div>
 
@@ -221,15 +268,27 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
               </h3>
               
               <div className="space-y-6 text-[#8A93B2] leading-loose text-lg font-light">
-                <p>
-                  Patient presents with chronic <TooltipTerm term="joint inflammation" def="Swelling, pain, and stiffness in one or more joints caused by immune system activity." /> and <TooltipTerm term="malar rash" def="A butterfly-shaped rash across the cheeks and nose, a hallmark sign of Lupus." />. 
-                  Longitudinal blood work shows a sustained upward trend in <TooltipTerm term="CRP" def="C-Reactive Protein — an inflammatory marker. Persistent elevation suggests chronic systemic inflammation." /> over 18 months. 
-                  Currently experiencing <TooltipTerm term="leukopenia" def="A lower-than-normal white blood cell count, commonly seen in autoimmune conditions like Lupus." /> and persistent fatigue affecting daily tasks.
-                </p>
-                <p>
-                   Lab ratios combined with visual evidence align with a <span className="text-[#F0F2F8] font-medium border-b border-[#7B61FF]">Systemic Autoimmune</span> profile. 
-                   Secondary literature flags suggest <TooltipTerm term="Systemic Lupus Erythematosus (SLE)" def="An autoimmune disease where the immune system attacks healthy tissue, causing widespread inflammation." /> as a potential etiology requiring specialist confirmation.
-                </p>
+                {resultsLoading ? (
+                  <div className="space-y-3">
+                    <div className="h-4 bg-[#1A1D26] rounded animate-pulse w-full" />
+                    <div className="h-4 bg-[#1A1D26] rounded animate-pulse w-5/6" />
+                    <div className="h-4 bg-[#1A1D26] rounded animate-pulse w-4/5" />
+                  </div>
+                ) : laymanCompass ? (
+                  <p className="whitespace-pre-line">{laymanCompass}</p>
+                ) : (
+                  <>
+                    <p>
+                      Patient presents with chronic <TooltipTerm term="joint inflammation" def="Swelling, pain, and stiffness in one or more joints caused by immune system activity." /> and <TooltipTerm term="malar rash" def="A butterfly-shaped rash across the cheeks and nose, a hallmark sign of Lupus." />.
+                      Longitudinal blood work shows a sustained upward trend in <TooltipTerm term="CRP" def="C-Reactive Protein — an inflammatory marker. Persistent elevation suggests chronic systemic inflammation." /> over 18 months.
+                      Currently experiencing <TooltipTerm term="leukopenia" def="A lower-than-normal white blood cell count, commonly seen in autoimmune conditions like Lupus." /> and persistent fatigue affecting daily tasks.
+                    </p>
+                    <p>
+                      Lab ratios combined with visual evidence align with a <span className="text-[#F0F2F8] font-medium border-b border-[#7B61FF]">Systemic Autoimmune</span> profile.
+                      Secondary literature flags suggest <TooltipTerm term="Systemic Lupus Erythematosus (SLE)" def="An autoimmune disease where the immune system attacks healthy tissue, causing widespread inflammation." /> as a potential etiology requiring specialist confirmation.
+                    </p>
+                  </>
+                )}
               </div>
             </motion.div>
 
@@ -268,11 +327,10 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
                 "I've been tracking my symptoms for over a year. My blood work shows a sustained rise in inflammatory markers, and I've developed a recurring facial rash and joint pain. Here is a clinical summary generated from my lab trends and photos."
               </p>
 
-              <Button 
-                onClick={handleCopy} 
+              <Button
+                onClick={handleCopy}
                 variant="secondary"
                 className="w-full text-sm py-2 h-10"
-                icon={false}
               >
                 {copied ? (
                    <motion.div 

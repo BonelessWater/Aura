@@ -7,12 +7,16 @@ import { ResultsDashboard } from '../components/results/ResultsDashboard';
 import { SOAPNote } from '../components/results/SOAPNote';
 import { SpecialistMap } from '../components/specialist/SpecialistMap';
 import { Community } from '../components/community/Community';
+import { ErrorBoundary } from '../components/shared/ErrorBoundary';
+import { useResults } from '../../api/hooks/useResults';
 
 export const Home = () => {
   const [view, setView] = useState<'hero' | 'intake' | 'processing' | 'results'>('hero');
   const [showSOAP, setShowSOAP] = useState(false);
   const [showSpecialists, setShowSpecialists] = useState(false);
   const [showCommunity, setShowCommunity] = useState(false);
+
+  const { data: results } = useResults();
 
   const handleStart = () => setView('intake');
   const handleIntakeComplete = () => setView('processing');
@@ -33,46 +37,56 @@ export const Home = () => {
         )}
 
         {view === 'intake' && (
-          <motion.div 
+          <motion.div
             key="intake"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
           >
-            <IntakeWizard onComplete={handleIntakeComplete} />
+            <ErrorBoundary label="Intake Error">
+              <IntakeWizard onComplete={handleIntakeComplete} />
+            </ErrorBoundary>
           </motion.div>
         )}
 
         {view === 'processing' && (
-          <motion.div 
+          <motion.div
             key="processing"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <Processing onComplete={handleProcessingComplete} />
+            <ErrorBoundary label="Processing Error">
+              <Processing onComplete={handleProcessingComplete} />
+            </ErrorBoundary>
           </motion.div>
         )}
 
         {view === 'results' && (
-          <motion.div 
+          <motion.div
             key="results"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="w-full h-full"
           >
-            <ResultsDashboard 
-              onViewSOAP={() => setShowSOAP(true)}
-              onViewSpecialists={() => setShowSpecialists(true)}
-              onViewCommunity={() => setShowCommunity(true)}
-            />
+            <ErrorBoundary label="Results Error">
+              <ResultsDashboard
+                onViewSOAP={() => setShowSOAP(true)}
+                onViewSpecialists={() => setShowSpecialists(true)}
+                onViewCommunity={() => setShowCommunity(true)}
+              />
+            </ErrorBoundary>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Overlays */}
-      <SOAPNote isOpen={showSOAP} onClose={() => setShowSOAP(false)} />
+      <SOAPNote
+        isOpen={showSOAP}
+        onClose={() => setShowSOAP(false)}
+        soapNote={results?.translator_output?.soap_note ?? null}
+      />
       
       <AnimatePresence>
         {showSpecialists && (

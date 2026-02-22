@@ -11,7 +11,6 @@ Interactive docs: http://localhost:8000/docs
 from __future__ import annotations
 
 import asyncio
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -31,6 +30,7 @@ from backend.routers import (  # noqa: E402 — must come after patch
     moderate,
     pipeline,
     research,
+    results,
     route,
     stream,
     translate,
@@ -88,16 +88,16 @@ app.include_router(moderate.router, tags=["Moderation"])
 app.include_router(pipeline.router, tags=["Pipeline"])
 app.include_router(stream.router, tags=["Streaming"])
 app.include_router(jobs.router, tags=["Jobs"])
+app.include_router(results.router, tags=["Results"])
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
 @app.get("/health", tags=["Meta"])
 async def health():
-    vllm_url = os.environ.get("VLLM_BASE_URL", "")
     return {
         "status": "ok",
         "databricks": databricks_available(),
-        "vllm": bool(vllm_url),
+        "vllm": bool(settings.vllm_base_url),
         "sessions_active": active_count(),
     }

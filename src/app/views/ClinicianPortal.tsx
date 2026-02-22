@@ -7,10 +7,13 @@ import {
 import {
   ShieldCheck, FileText, ExternalLink, X, ChevronDown,
   ChevronRight, ThumbsUp, Minus, ThumbsDown, Send, Printer,
-  QrCode,
+  QrCode, AlertCircle,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useParams } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../../api/client';
+import type { components } from '../../api/schema';
 
 /* ---------- Types ---------- */
 interface Citation {
@@ -240,17 +243,42 @@ const LabTable = ({ page }: { page: (typeof pdfPages)[number] }) => (
 /* ---------- Main Component ---------- */
 export const ClinicianPortal = () => {
   const { id } = useParams();
-  const patientId = id || 'A7B2';
+  const patientId = id ?? '';
 
   const [activeCitation, setActiveCitation] = useState<string | null>(null);
   const [feedbackGiven, setFeedbackGiven] = useState<string | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
+  // Fetch real pipeline results for this patient
+  const {
+    data: results,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['results', patientId],
+    queryFn: async () => {
+      const { data, response } = await apiClient.GET('/results/{patient_id}', {
+        params: { path: { patient_id: patientId } },
+      });
+      if (response.status === 404) throw Object.assign(new Error('not_found'), { status: 404 });
+      if (!data) throw new Error('Failed to fetch results');
+      return data;
+    },
+    enabled: !!patientId,
+    retry: false,
+  });
+
+  const is404 = (error as (Error & { status?: number }) | null)?.status === 404;
+
   const allCitations: Citation[] = soapSections.flatMap((s) =>
     'citations' in s && s.citations ? s.citations : []
   );
   const activeCitationData = allCitations.find((c) => c.id === activeCitation);
+
+  // Build radar data from disease_candidates if available
+  const candidates = results?.router_output?.disease_candidates ?? [];
+  const hasRealData = candidates.length > 0;
 
   const handleFeedback = (type: string) => {
     setFeedbackGiven(type);
@@ -259,6 +287,34 @@ export const ClinicianPortal = () => {
   const handleFeedbackSubmit = () => {
     setFeedbackSubmitted(true);
   };
+
+  // 404 state
+  if (is404) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="text-center max-w-md px-6">
+          <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Patient Not Found</h1>
+          <p className="text-gray-500 text-sm leading-relaxed">
+            No session was found for patient ID <span className="font-mono text-gray-700">{patientId}</span>.
+            The session may have expired or the ID may be incorrect.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#7B61FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Loading patient data…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#111111]" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -336,44 +392,57 @@ export const ClinicianPortal = () => {
           </div>
 
           <div className="p-6 space-y-6">
-            {soapSections.map((section) => (
-              <div key={section.title} className="bg-white rounded-lg border border-gray-200 p-5">
+            {/* Real SOAP note if available */}
+            {results?.translator_output?.soap_note ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-5">
                 <h3 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3 pb-2 border-b border-gray-100">
-                  {section.title}
+                  SOAP Note
                 </h3>
-
-                {'content' in section && section.content && (
-                  <p className="text-sm text-gray-800 leading-relaxed">{section.content}</p>
-                )}
-
-                {'items' in section && section.items && (
-                  <ol className="text-sm text-gray-800 leading-relaxed space-y-1.5 list-decimal list-inside">
-                    {section.items.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ol>
-                )}
-
-                {'citations' in section && section.citations && (
-                  <div className="mt-4 p-4 bg-blue-50/80 border border-blue-100 rounded-lg space-y-2">
-                    <p className="text-xs font-semibold text-blue-800 mb-2">Citations:</p>
-                    {section.citations.map((cit, i) => (
-                      <button
-                        key={cit.id}
-                        onClick={() => setActiveCitation(cit.id)}
-                        className="flex items-start gap-2 text-left w-full group"
-                      >
-                        <span className="text-xs text-blue-500 font-mono mt-0.5">[{i + 1}]</span>
-                        <span className="text-xs text-blue-700 group-hover:text-blue-900 group-hover:underline transition-colors">
-                          {cit.text}
-                        </span>
-                        <ExternalLink className="w-3 h-3 text-blue-400 flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <pre className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-sans">
+                  {results.translator_output.soap_note}
+                </pre>
               </div>
-            ))}
+            ) : (
+              /* Demo SOAP sections — shown when pipeline hasn't run */
+              soapSections.map((section) => (
+                <div key={section.title} className="bg-white rounded-lg border border-gray-200 p-5">
+                  <h3 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3 pb-2 border-b border-gray-100">
+                    {section.title}
+                  </h3>
+
+                  {'content' in section && section.content && (
+                    <p className="text-sm text-gray-800 leading-relaxed">{section.content}</p>
+                  )}
+
+                  {'items' in section && section.items && (
+                    <ol className="text-sm text-gray-800 leading-relaxed space-y-1.5 list-decimal list-inside">
+                      {section.items.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ol>
+                  )}
+
+                  {'citations' in section && section.citations && (
+                    <div className="mt-4 p-4 bg-blue-50/80 border border-blue-100 rounded-lg space-y-2">
+                      <p className="text-xs font-semibold text-blue-800 mb-2">Citations:</p>
+                      {section.citations.map((cit, i) => (
+                        <button
+                          key={cit.id}
+                          onClick={() => setActiveCitation(cit.id)}
+                          className="flex items-start gap-2 text-left w-full group"
+                        >
+                          <span className="text-xs text-blue-500 font-mono mt-0.5">[{i + 1}]</span>
+                          <span className="text-xs text-blue-700 group-hover:text-blue-900 group-hover:underline transition-colors">
+                            {cit.text}
+                          </span>
+                          <ExternalLink className="w-3 h-3 text-blue-400 flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
 
             {/* Radar Chart — Confidence Breakdown */}
             <div className="bg-white rounded-lg border border-gray-200 p-5">

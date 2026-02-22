@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Helper for Clinical Translation hover only
-export const DoctorHoverHelper = ({ boxRef }: { boxRef: React.RefObject<HTMLDivElement> }) => {
+export const DoctorHoverHelper = ({ boxRef }: { boxRef: React.RefObject<HTMLDivElement | null> }) => {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
