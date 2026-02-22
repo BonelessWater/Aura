@@ -93,7 +93,10 @@ def build_spacy_pipeline(model: str = "en_core_sci_lg"):
     # Add EntityRuler before the existing NER component
     ruler_name = "entity_ruler"
     if ruler_name not in nlp.pipe_names:
-        ruler = nlp.add_pipe("entity_ruler", before="ner" if "ner" in nlp.pipe_names else "last")
+        if "ner" in nlp.pipe_names:
+            ruler = nlp.add_pipe("entity_ruler", before="ner")
+        else:
+            ruler = nlp.add_pipe("entity_ruler", last=True)
         ruler.add_patterns(DURATION_PATTERNS + SEVERITY_PATTERNS + BODY_LOCATION_PATTERNS)
 
     return nlp

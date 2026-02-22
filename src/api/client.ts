@@ -9,11 +9,21 @@
 import createClient from "openapi-fetch";
 import type { paths } from "./schema";
 
+const rawBackendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL?.trim();
+export const API_BASE_URL = rawBackendBaseUrl
+  ? rawBackendBaseUrl.replace(/\/+$/, "")
+  : "/api";
+
+function toApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+}
+
 // ---------------------------------------------------------------------------
 // Typed JSON client — all non-multipart endpoints
 // ---------------------------------------------------------------------------
 
-export const apiClient = createClient<paths>({ baseUrl: "/api" });
+export const apiClient = createClient<paths>({ baseUrl: API_BASE_URL });
 
 // ---------------------------------------------------------------------------
 // Multipart helper — /extract, /interview, /pipeline/full
@@ -30,7 +40,7 @@ export async function postMultipart<T>(
   path: string,
   formData: FormData,
 ): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(toApiUrl(path), {
     method: "POST",
     body: formData,
   });

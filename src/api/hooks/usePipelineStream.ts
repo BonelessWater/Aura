@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { eventToStepIndex } from "../../app/components/processing/Processing";
+import { API_BASE_URL } from "../client";
 
 export interface PipelineStreamEvent {
   type?: string;
@@ -20,7 +21,7 @@ interface UsePipelineStreamOptions {
 }
 
 /**
- * SSE hook: connects to GET /api/stream/{patientId} and drives the processing
+ * SSE hook: connects to GET {API_BASE_URL}/stream/{patientId} and drives the processing
  * screen in real time.
  *
  * Handles both event shapes:
@@ -45,7 +46,7 @@ export function usePipelineStream({
     const controller = new AbortController();
     abortRef.current = controller;
 
-    fetchEventSource(`/api/stream/${patientId}`, {
+    fetchEventSource(`${API_BASE_URL}/stream/${encodeURIComponent(patientId)}`, {
       signal: controller.signal,
 
       onmessage(ev) {
