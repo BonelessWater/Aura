@@ -13,6 +13,7 @@ import { clsx } from 'clsx';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { useNavigate } from 'react-router';
 import { DailyNotes } from './DailyNotes';
+import { AppleWatchPanel } from './AppleWatchPanel';
 import {
   LineChart, Line, BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis,
   XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart,
@@ -423,7 +424,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
   useEffect(() => {
     const container = mainRef.current;
     if (!container) return;
-    const sections = ['scores', 'lab-trends', 'next-steps', 'daily-notes'];
+    const sections = ['scores', 'lab-trends', 'next-steps', 'daily-notes', 'patient-data'];
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -444,6 +445,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
     { id: 'lab-trends', icon: Activity, label: "Blood Work" },
     { id: 'next-steps', icon: MessageSquare, label: "What It Means" },
     { id: 'daily-notes', icon: BookOpen, label: "Journal" },
+    { id: 'patient-data', icon: Activity, label: "Patient Data" },
   ];
 
   const actionItems = [
@@ -493,6 +495,12 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
   return (
     <Tooltip.Provider>
       <div ref={wrapperRef} className="flex flex-col h-screen overflow-hidden relative">
+
+        {/* Glass pane — frosted layer over blood cell background */}
+        <div className="fixed inset-0 pointer-events-none z-[1] backdrop-blur-md bg-[#020005]/35" />
+
+        {/* Content sits above glass pane */}
+        <div className="relative z-[2] flex flex-col flex-1 overflow-hidden">
 
         {/* Floating Dock */}
         <FloatingDock
@@ -931,6 +939,16 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
               </div>
             </div>
 
+            {/* ============ PATIENT DATA ============ */}
+            <motion.div
+              id="patient-data"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+              className="scroll-target dashboard-card p-8"
+            >
+              <h3 className="text-lg font-medium text-[#F0F2F8] mb-6">Patient Data</h3>
+              <AppleWatchPanel />
+            </motion.div>
+
             {/* ============ RECOMMENDED DOCTOR ============ */}
             <motion.div
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
@@ -997,6 +1015,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
             <div className="h-28" />
           </div>
         </div>
+        </div>{/* end z-[2] content wrapper */}
       </div>
 
 
