@@ -27,7 +27,7 @@ export const Hero = ({ onStart }: { onStart: () => void }) => {
           A<span className="text-white/60">u</span>RA
         </h1>
         <p className="text-[#8c3030] font-mono text-xs tracking-[0.3em] uppercase mt-1">
-          Autoimmune Research Assistant
+          Autoimmune Risk Analyzer
         </p>
       </motion.div>
 
