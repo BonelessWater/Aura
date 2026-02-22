@@ -53,7 +53,12 @@ def run_interviewer(
         patient_id=patient_id,
     )
 
-    nlp = _get_default_pipeline()
+    from nlp.shared.azure_client import get_nlp_backend
+
+    # Only load the spacy pipeline when using local NER
+    nlp = None
+    if get_nlp_backend("ner") != "azure":
+        nlp = _get_default_pipeline()
 
     # ── Step 1: NER ──────────────────────────────────────────────────────────
     raw_entities = extract_entities(symptom_text, nlp=nlp)

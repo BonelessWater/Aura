@@ -59,6 +59,7 @@ def run_translator(
 
     # ── Step 1-2: SOAP Note ───────────────────────────────────────────────────
     from nlp.translator.faithfulness_checker import check_faithfulness
+    from nlp.translator.soap_generator import _build_pipeline_context
     passages = research_result.passages if research_result else []
 
     soap_note = generate_soap(
@@ -68,7 +69,10 @@ def run_translator(
         router_output    = router_output,
     )
 
-    passed, flagged, mean_faith = check_faithfulness(soap_note, passages)
+    pipeline_context = _build_pipeline_context(lab_report, interview_result, router_output)
+    passed, flagged, mean_faith = check_faithfulness(
+        soap_note, passages, pipeline_context=pipeline_context
+    )
 
     ThoughtStream.emit(
         agent="The Translator",

@@ -64,6 +64,10 @@ class NLIScorer:
     def load(self) -> None:
         if self._pipe:
             return
+        from nlp.shared.azure_client import get_nlp_backend
+        if get_nlp_backend("disease_scorer") == "azure":
+            logger.info("NLI scorer using Azure backend, skipping local model load")
+            return
         try:
             from transformers import pipeline
             self._pipe = pipeline(
@@ -78,8 +82,15 @@ class NLIScorer:
     def entailment_score(self, premise: str, hypothesis: str) -> float:
         """
         Return the entailment probability for (premise, hypothesis).
-        Returns 0.0 if model not available.
+
+        Uses Azure OpenAI when AURA_NLP_BACKEND=azure, otherwise local DeBERTa NLI.
+        Returns 0.0 if neither is available.
         """
+        from nlp.shared.azure_client import get_nlp_backend
+
+        if get_nlp_backend("disease_scorer") == "azure":
+            return _azure_entailment_score(premise, hypothesis)
+
         if not self._pipe:
             return 0.0
         try:
@@ -92,6 +103,41 @@ class NLIScorer:
         except Exception as e:
             logger.debug(f"NLI inference error: {e}")
             return 0.0
+
+
+def _azure_entailment_score(premise: str, hypothesis: str) -> float:
+    """Score entailment using Azure OpenAI instead of DeBERTa NLI."""
+    import json as _json
+
+    from nlp.shared.azure_client import get_azure_nlp_client
+
+    client = get_azure_nlp_client()
+    prompt = (
+        "You are a clinical evidence scorer. Given a premise and hypothesis, "
+        "estimate the entailment probability (0.0 to 1.0).\n"
+        "0.0 = no support, 1.0 = strong support.\n\n"
+        f"Premise: {premise[:512]}\n\n"
+        f"Hypothesis: {hypothesis}\n\n"
+        'Return ONLY a JSON object: {"entailment_score": 0.XX}'
+    )
+    raw = client.chat(
+        deployment="mini",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        max_tokens=50,
+    )
+    if not raw:
+        return 0.0
+    try:
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0]
+        result = _json.loads(raw)
+        score = float(result.get("entailment_score", 0.0))
+        return max(0.0, min(1.0, score))
+    except (ValueError, _json.JSONDecodeError):
+        logger.warning("Azure NLI returned non-JSON: %s", raw[:200])
+        return 0.0
 
 
 def score_disease(

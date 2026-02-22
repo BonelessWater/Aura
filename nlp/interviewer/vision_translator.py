@@ -34,12 +34,29 @@ Do not speculate on any diagnosis. Do not use lay language.
 Do not include any introductory text."""
 
 
+def _call_azure_vision(image_b64: str) -> Optional[str]:
+    """Call Azure OpenAI GPT-4o vision instead of vLLM LLaVA-Med."""
+    from nlp.shared.azure_client import get_azure_nlp_client
+
+    client = get_azure_nlp_client()
+    return client.chat_with_image(
+        deployment="4o",
+        system_prompt=VISION_SYSTEM_PROMPT,
+        image_b64=image_b64,
+        user_text="Describe clinical findings only.",
+        temperature=0.1,
+        max_tokens=256,
+    )
+
+
 def image_to_clinical_keywords(
     image_path: str | Path,
     max_keywords: int = 20,
 ) -> list[str]:
     """
-    Send an image to LLaVA-Med and return a list of clinical keywords.
+    Send an image to a vision model and return a list of clinical keywords.
+
+    Uses Azure OpenAI GPT-4o when AURA_NLP_BACKEND=azure, otherwise vLLM LLaVA-Med.
 
     Args:
         image_path: Path to a JPEG/PNG image file
@@ -48,13 +65,19 @@ def image_to_clinical_keywords(
     Returns:
         List of clinical observation strings, each tagged with cluster signal
     """
+    from nlp.shared.azure_client import get_nlp_backend
+
     image_b64 = _encode_image(image_path)
-    raw_output = _call_vllm(image_b64)
+
+    if get_nlp_backend("vision") == "azure":
+        raw_output = _call_azure_vision(image_b64)
+    else:
+        raw_output = _call_vllm(image_b64)
+
     if not raw_output:
         return []
 
     keywords = _parse_keywords(raw_output)
-    # Strip any diagnostic language that slipped through
     keywords = _strip_diagnostic_language(keywords)
     return keywords[:max_keywords]
 

@@ -182,6 +182,10 @@ class ClusterScorer:
     def load(self) -> None:
         if self._model:
             return
+        from nlp.shared.azure_client import get_nlp_backend
+        if get_nlp_backend("cluster_scorer") == "azure":
+            logger.info("Cluster scorer using Azure backend, skipping local model load")
+            return
         model_path = MODEL_DIR if MODEL_DIR.exists() else BASE_MODEL
         try:
             from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -198,8 +202,18 @@ class ClusterScorer:
     def predict(self, feature_row: dict) -> dict[str, float]:
         """
         Returns {label: probability} for all 3 clusters.
-        Falls back to heuristic scoring if model not available.
+
+        Uses Azure OpenAI when AURA_NLP_BACKEND=azure, otherwise local BiomedBERT.
+        Falls back to heuristic scoring if neither is available.
         """
+        from nlp.shared.azure_client import get_nlp_backend
+
+        if get_nlp_backend("cluster_scorer") == "azure":
+            result = _azure_predict(feature_row)
+            if result is not None:
+                return result
+            return _heuristic_score(feature_row)
+
         if not self._model:
             return _heuristic_score(feature_row)
 
@@ -218,6 +232,46 @@ class ClusterScorer:
         except Exception as e:
             logger.warning(f"Cluster scorer inference failed: {e}")
             return _heuristic_score(feature_row)
+
+
+def _azure_predict(feature_row: dict) -> Optional[dict[str, float]]:
+    """Classify cluster using Azure OpenAI instead of BiomedBERT."""
+    import json as _json
+
+    from nlp.shared.azure_client import get_azure_nlp_client
+
+    client = get_azure_nlp_client()
+    text = features_to_text(feature_row)
+    prompt = (
+        "Given the following lab features, estimate the probability that the patient's "
+        "pattern aligns with each autoimmune cluster.\n"
+        "- Systemic (e.g., lupus, rheumatoid arthritis)\n"
+        "- Gastrointestinal (e.g., Crohn's, ulcerative colitis)\n"
+        "- Endocrine (e.g., Hashimoto's, Graves')\n\n"
+        'Return ONLY a JSON object: {"Systemic": 0.XX, "Gastrointestinal": 0.XX, "Endocrine": 0.XX}\n'
+        "Probabilities must sum to 1.0.\n\n"
+        f"Lab features: {text}"
+    )
+    raw = client.chat(
+        deployment="nano",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        max_tokens=100,
+    )
+    if not raw:
+        return None
+    try:
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0]
+        result = _json.loads(raw)
+        # Validate keys and normalize
+        probs = {label: float(result.get(label, 0)) for label in LABELS}
+        total = sum(probs.values()) or 1.0
+        return {k: round(v / total, 4) for k, v in probs.items()}
+    except (ValueError, _json.JSONDecodeError):
+        logger.warning("Azure cluster scorer returned non-JSON: %s", raw[:200])
+        return None
 
 
 def _heuristic_score(feature_row: dict) -> dict[str, float]:

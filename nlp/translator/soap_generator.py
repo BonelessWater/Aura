@@ -52,13 +52,24 @@ def generate_soap(
 
     passages = research_result.passages if research_result else []
 
+    # Build pipeline context so the faithfulness checker knows about
+    # router scores, interview symptoms, and lab data referenced in the note
+    pipeline_context = _build_pipeline_context(lab_report, interview_result, router_output)
+
+    from nlp.shared.azure_client import get_nlp_backend
+
     for attempt in range(max_attempts):
-        raw = _call_vllm_soap(lab_report, interview_result, router_output, passages)
+        if get_nlp_backend("soap") == "azure":
+            raw = _call_azure_soap(lab_report, interview_result, router_output, passages)
+        else:
+            raw = _call_vllm_soap(lab_report, interview_result, router_output, passages)
         if not raw:
-            break  # vLLM unavailable — use template
+            break  # LLM unavailable — use template
 
         # Faithfulness check
-        passed, flagged, mean_score = check_faithfulness(raw, passages)
+        passed, flagged, mean_score = check_faithfulness(
+            raw, passages, pipeline_context=pipeline_context
+        )
         if passed:
             return raw
         logger.warning(
@@ -68,6 +79,62 @@ def generate_soap(
 
     # Fallback: structured template
     return _template_soap(lab_report, interview_result, router_output, passages)
+
+
+def _build_pipeline_context(
+    lab_report:       Optional[LabReport],
+    interview_result: Optional[InterviewResult],
+    router_output:    Optional[RouterOutput],
+) -> str:
+    """Build a plain-text summary of pipeline data for the faithfulness checker."""
+    parts = []
+
+    if interview_result and interview_result.symptoms:
+        syms = [f"{s.entity} ({s.severity or 'unspecified'}, "
+                f"{s.duration_months or '?'} months)" for s in interview_result.symptoms[:6]]
+        parts.append(f"Reported symptoms: {'; '.join(syms)}.")
+
+    if lab_report:
+        fp = lab_report.bio_fingerprint
+        if fp.sustained_abnormalities:
+            parts.append(f"Sustained abnormalities: {', '.join(fp.sustained_abnormalities)}.")
+        if fp.morphological_shifts:
+            parts.append(f"Morphological shifts: {', '.join(fp.morphological_shifts)}.")
+        if fp.NLR:
+            parts.append(f"NLR: {fp.NLR[-1].value:.2f} ({fp.NLR[-1].flag or 'normal'}).")
+        if fp.C3_C4:
+            parts.append(f"C3/C4: {fp.C3_C4[-1].value:.2f} ({fp.C3_C4[-1].flag or 'normal'}).")
+
+    if router_output:
+        parts.append(
+            f"Cluster alignment: {router_output.cluster.value} "
+            f"at {router_output.cluster_alignment_score:.0%}."
+        )
+        for dc in router_output.disease_candidates[:3]:
+            parts.append(
+                f"Disease flag: {dc.disease} at {dc.disease_alignment_score:.0%} "
+                f"alignment ({dc.criteria_count} criteria met)."
+            )
+        parts.append(f"Routing recommendation: {router_output.routing_recommendation}.")
+
+    return " ".join(parts)
+
+
+def _call_azure_soap(lab_report, interview_result, router_output, passages) -> Optional[str]:
+    """Generate SOAP note using Azure OpenAI instead of vLLM Mistral."""
+    from nlp.shared.azure_client import get_azure_nlp_client
+
+    client = get_azure_nlp_client()
+    user_content = _build_soap_prompt(lab_report, interview_result, router_output, passages)
+    return client.chat(
+        deployment="mini",
+        messages=[
+            {"role": "system", "content": SOAP_SYSTEM_PROMPT},
+            {"role": "user", "content": user_content},
+        ],
+        temperature=0.2,
+        max_tokens=1200,
+    )
 
 
 def _call_vllm_soap(

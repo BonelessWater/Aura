@@ -40,6 +40,10 @@ class PubMedEmbedder:
     def load_model(self) -> None:
         if self._model:
             return
+        from nlp.shared.azure_client import get_nlp_backend
+        if get_nlp_backend("researcher") == "azure":
+            logger.info("Researcher using Azure backend, skipping local embedding model load")
+            return
         try:
             from sentence_transformers import SentenceTransformer
             self._model = SentenceTransformer(EMBEDDING_MODEL)

@@ -49,11 +49,19 @@ def generate_layman_compass(
     Retries with stricter prompt if grade > 8.
     Falls back to template if vLLM unavailable.
     """
+    from nlp.shared.azure_client import get_nlp_backend
+
     for attempt in range(max_attempts):
-        text = _call_vllm_layman(
-            router_output, interview_result, lab_report,
-            simplify_more=(attempt > 0)
-        )
+        if get_nlp_backend("layman") == "azure":
+            text = _call_azure_layman(
+                router_output, interview_result, lab_report,
+                simplify_more=(attempt > 0)
+            )
+        else:
+            text = _call_vllm_layman(
+                router_output, interview_result, lab_report,
+                simplify_more=(attempt > 0)
+            )
         if not text:
             break
 
@@ -67,6 +75,25 @@ def generate_layman_compass(
     text  = _template_compass(router_output, interview_result, lab_report)
     grade = _check_reading_level(text)
     return text + DISCLAIMER, grade
+
+
+def _call_azure_layman(router_output, interview_result, lab_report, simplify_more=False) -> Optional[str]:
+    """Generate layman text using Azure OpenAI instead of vLLM Mistral."""
+    from nlp.shared.azure_client import get_azure_nlp_client
+
+    client = get_azure_nlp_client()
+    prompt = _build_layman_prompt(router_output, interview_result, lab_report)
+    if simplify_more:
+        prompt = "Use only very simple words. Imagine explaining to a 12-year-old.\n\n" + prompt
+    return client.chat(
+        deployment="nano",
+        messages=[
+            {"role": "system", "content": LAYMAN_SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.3,
+        max_tokens=400,
+    )
 
 
 def _call_vllm_layman(router_output, interview_result, lab_report, simplify_more=False) -> Optional[str]:

@@ -99,6 +99,62 @@ def build_spacy_pipeline(model: str = "en_core_sci_lg"):
     return nlp
 
 
+NER_AZURE_SYSTEM_PROMPT = (
+    "You are a clinical NER system. Extract named entities from the text.\n"
+    "For each entity, return a JSON array of objects with:\n"
+    '- "text": the exact span from the input\n'
+    '- "label": one of DISEASE, CHEMICAL, DURATION, SEVERITY, LOCATION\n\n'
+    "Rules:\n"
+    "- DISEASE: conditions, diagnoses, disease names\n"
+    "- CHEMICAL: drugs, medications, supplements\n"
+    "- DURATION: time periods (e.g., 'for 3 months', 'since January')\n"
+    "- SEVERITY: qualifiers (mild, moderate, severe, chronic, acute, etc.)\n"
+    "- LOCATION: body parts, anatomical locations\n"
+    "Return ONLY a JSON array. No other text."
+)
+
+
+def _extract_entities_azure(text: str) -> list[dict]:
+    """Extract entities using Azure OpenAI instead of scispaCy."""
+    import json as _json
+
+    from nlp.shared.azure_client import get_azure_nlp_client
+
+    client = get_azure_nlp_client()
+    raw = client.chat(
+        deployment="nano",
+        messages=[
+            {"role": "system", "content": NER_AZURE_SYSTEM_PROMPT},
+            {"role": "user", "content": text},
+        ],
+        temperature=0,
+        max_tokens=800,
+    )
+    if not raw:
+        return []
+
+    try:
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```\w*\n?", "", raw)
+            raw = re.sub(r"\n?```$", "", raw)
+        items = _json.loads(raw)
+    except (_json.JSONDecodeError, ValueError):
+        logger.warning("Azure NER returned non-JSON: %s", raw[:200])
+        return []
+
+    entities = []
+    for item in items:
+        ent_text = item.get("text", "")
+        label = item.get("label", "")
+        if not ent_text or not label:
+            continue
+        start = text.find(ent_text)
+        end = start + len(ent_text) if start >= 0 else -1
+        entities.append({"text": ent_text, "label": label, "start": start, "end": end})
+    return entities
+
+
 def extract_entities(text: str, nlp=None) -> list[dict]:
     """
     Extract named entities from text.
@@ -106,7 +162,14 @@ def extract_entities(text: str, nlp=None) -> list[dict]:
     Returns a list of dicts:
       {text, label, start, end}
     Where label is one of: DISEASE, CHEMICAL, DURATION, SEVERITY, LOCATION, etc.
+
+    Uses Azure OpenAI when AURA_NLP_BACKEND=azure, otherwise local scispaCy.
     """
+    from nlp.shared.azure_client import get_nlp_backend
+
+    if get_nlp_backend("ner") == "azure":
+        return _extract_entities_azure(text)
+
     if nlp is None:
         nlp = _get_default_pipeline()
 

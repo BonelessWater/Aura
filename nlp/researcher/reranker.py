@@ -35,6 +35,10 @@ class MedCPTReranker:
     def load(self) -> None:
         if self._model:
             return
+        from nlp.shared.azure_client import get_nlp_backend
+        if get_nlp_backend("reranker") == "azure":
+            logger.info("Reranker using Azure backend, skipping local model load")
+            return
         try:
             from transformers import AutoTokenizer, AutoModelForSequenceClassification
             import torch
@@ -70,13 +74,49 @@ class MedCPTReranker:
             return [0.0] * len(passages)
 
 
+def _azure_rerank_scores(query: str, passages: list[str]) -> list[float]:
+    """Score query-passage relevance using Azure OpenAI instead of MedCPT."""
+    import json as _json
+
+    from nlp.shared.azure_client import get_azure_nlp_client
+
+    client = get_azure_nlp_client()
+    passages_numbered = "\n".join(f"{i+1}. {p[:300]}" for i, p in enumerate(passages))
+    prompt = (
+        f"Score the relevance of each passage to the query on a scale of 0.0 to 10.0.\n"
+        f"Return ONLY a JSON array of floats, one per passage, in the same order.\n\n"
+        f"Query: {query}\n\n"
+        f"Passages:\n{passages_numbered}"
+    )
+    raw = client.chat(
+        deployment="nano",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        max_tokens=200,
+    )
+    if not raw:
+        return [0.0] * len(passages)
+    try:
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0]
+        scores = _json.loads(raw)
+        # Normalize 0-10 scale to roughly match cross-encoder logit range
+        return [float(s) - 5.0 for s in scores]
+    except (ValueError, _json.JSONDecodeError):
+        logger.warning("Azure reranker returned non-JSON: %s", raw[:200])
+        return [0.0] * len(passages)
+
+
 def rerank(
     query:      str,
     candidates: list[RetrievedPassage],
     top_k:      int = TOP_K_FINAL,
 ) -> list[RetrievedPassage]:
     """
-    Re-rank VS candidates using MedCPT cross-encoder.
+    Re-rank VS candidates using MedCPT cross-encoder or Azure OpenAI.
+
+    Uses Azure OpenAI when AURA_NLP_BACKEND=azure, otherwise local MedCPT.
 
     Args:
         query:      the primary patient query string
@@ -89,9 +129,15 @@ def rerank(
     if not candidates:
         return []
 
-    ranker = _get_reranker()
-    texts  = [p.text for p in candidates]
-    scores = ranker.score(query, texts)
+    from nlp.shared.azure_client import get_nlp_backend
+
+    texts = [p.text for p in candidates]
+
+    if get_nlp_backend("reranker") == "azure":
+        scores = _azure_rerank_scores(query, texts)
+    else:
+        ranker = _get_reranker()
+        scores = ranker.score(query, texts)
 
     # Combine VS score (semantic) + cross-encoder score (relevance)
     for passage, ce_score in zip(candidates, scores):
