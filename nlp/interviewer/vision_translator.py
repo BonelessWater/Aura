@@ -1,28 +1,22 @@
 """
 Vision-to-Text Translator — The Interviewer, Step 5 (Phase 6).
 
-Calls a local LLaVA-Med instance (via vLLM) to generate clinical
+Calls Azure OpenAI multimodal chat to generate clinical
 keywords from patient-uploaded photos or video frames.
-
-Requires: vLLM running on Ubuntu with LLaVA-Med loaded.
-Set VLLM_BASE_URL env var (default: http://localhost:8000)
 """
 
 from __future__ import annotations
 
 import base64
 import logging
-import os
 from pathlib import Path
 from typing import Optional
 
 from nlp.interviewer.cluster_mapper import tag_cluster_signal
 from nlp.shared.schemas import Cluster
+from nlp.shared.azure_openai_client import chat_completion, read_env
 
 logger = logging.getLogger(__name__)
-
-VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000")
-VLLM_MODEL    = os.environ.get("VLLM_VISION_MODEL", "llava-med")
 
 VISION_SYSTEM_PROMPT = """You are a clinical documentation assistant.
 Describe the following image using precise medical terminology only.
@@ -49,7 +43,7 @@ def image_to_clinical_keywords(
         List of clinical observation strings, each tagged with cluster signal
     """
     image_b64 = _encode_image(image_path)
-    raw_output = _call_vllm(image_b64)
+    raw_output = _call_azure_vision(image_b64)
     if not raw_output:
         return []
 
@@ -122,38 +116,30 @@ def _encode_image(path: str | Path) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-def _call_vllm(image_b64: str) -> Optional[str]:
-    """POST to vLLM OpenAI-compatible API."""
-    try:
-        import requests
-        response = requests.post(
-            f"{VLLM_BASE_URL}/v1/chat/completions",
-            json={
-                "model": VLLM_MODEL,
-                "messages": [
-                    {"role": "system", "content": VISION_SYSTEM_PROMPT},
+def _call_azure_vision(image_b64: str) -> Optional[str]:
+    """POST to Azure OpenAI Chat Completions (vision-capable deployment)."""
+    return chat_completion(
+        messages=[
+            {"role": "system", "content": VISION_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": [
                     {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"},
-                            },
-                            {"type": "text", "text": "Describe clinical findings only."},
-                        ],
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"},
                     },
+                    {"type": "text", "text": "Describe clinical findings only."},
                 ],
-                "max_tokens": 256,
-                "temperature": 0.1,
             },
-            timeout=30,
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data["choices"][0]["message"]["content"]
-    except Exception as e:
-        logger.warning(f"vLLM vision call failed: {e}")
-        return None
+        ],
+        deployment=(
+            read_env("AZURE_OPENAI_DEPLOYMENT_VISION")
+            or read_env("AZURE_OPENAI_DEPLOYMENT_GPT4O")
+        ),
+        max_tokens=256,
+        temperature=0.1,
+        timeout=30,
+    )
 
 
 def _parse_keywords(raw: str) -> list[str]:

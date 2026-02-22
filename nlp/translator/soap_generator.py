@@ -2,27 +2,25 @@
 SOAP Note Generator — The Translator, Step 5.2.
 
 Generates a clinical SOAP note from the patient bundle.
-Uses Mistral-7B-Instruct via local vLLM server.
+Uses Azure OpenAI Chat Completions.
 
 Zero diagnostic language. Every claim requires an inline DOI citation.
 Assessments are framed as "X% Cluster Alignment" — never diagnoses.
 
-Set VLLM_BASE_URL env var (default: http://localhost:8000).
-Falls back to a template-based note if vLLM is unavailable.
+Set AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, and
+AZURE_OPENAI_DEPLOYMENT_GPT4O.
+Falls back to a template-based note if Azure OpenAI is unavailable.
 """
 
 from __future__ import annotations
 
 import logging
-import os
 from typing import Optional
 
 from nlp.shared.schemas import InterviewResult, LabReport, ResearchResult, RouterOutput
+from nlp.shared.azure_openai_client import chat_completion, read_env
 
 logger = logging.getLogger(__name__)
-
-VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000")
-VLLM_MODEL    = os.environ.get("VLLM_TEXT_MODEL", "mistralai/Mistral-7B-Instruct-v0.3")
 
 SOAP_SYSTEM_PROMPT = """You are generating a clinical SOAP note for specialist referral.
 
@@ -46,16 +44,16 @@ def generate_soap(
     """
     Generate a clinical SOAP note.
 
-    Tries vLLM first; falls back to structured template.
+    Tries Azure OpenAI first; falls back to structured template.
     """
     from nlp.translator.faithfulness_checker import check_faithfulness
 
     passages = research_result.passages if research_result else []
 
     for attempt in range(max_attempts):
-        raw = _call_vllm_soap(lab_report, interview_result, router_output, passages)
+        raw = _call_azure_soap(lab_report, interview_result, router_output, passages)
         if not raw:
-            break  # vLLM unavailable — use template
+            break  # Azure unavailable — use template
 
         # Faithfulness check
         passed, flagged, mean_score = check_faithfulness(raw, passages)
@@ -70,34 +68,24 @@ def generate_soap(
     return _template_soap(lab_report, interview_result, router_output, passages)
 
 
-def _call_vllm_soap(
+def _call_azure_soap(
     lab_report:       Optional[LabReport],
     interview_result: Optional[InterviewResult],
     router_output:    Optional[RouterOutput],
     passages:         list,
 ) -> Optional[str]:
-    """Call vLLM to generate the SOAP note."""
-    try:
-        import requests
-        user_content = _build_soap_prompt(lab_report, interview_result, router_output, passages)
-        response = requests.post(
-            f"{VLLM_BASE_URL}/v1/chat/completions",
-            json={
-                "model":    VLLM_MODEL,
-                "messages": [
-                    {"role": "system", "content": SOAP_SYSTEM_PROMPT},
-                    {"role": "user",   "content": user_content},
-                ],
-                "max_tokens": 1200,
-                "temperature": 0.2,
-            },
-            timeout=60,
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
-    except Exception as e:
-        logger.warning(f"vLLM SOAP generation failed: {e}")
-        return None
+    """Call Azure OpenAI to generate the SOAP note."""
+    user_content = _build_soap_prompt(lab_report, interview_result, router_output, passages)
+    return chat_completion(
+        messages=[
+            {"role": "system", "content": SOAP_SYSTEM_PROMPT},
+            {"role": "user", "content": user_content},
+        ],
+        deployment=read_env("AZURE_OPENAI_DEPLOYMENT_GPT4O"),
+        max_tokens=1200,
+        temperature=0.2,
+        timeout=60,
+    )
 
 
 def _build_soap_prompt(lab_report, interview_result, router_output, passages) -> str:

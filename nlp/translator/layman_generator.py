@@ -11,13 +11,12 @@ Always closes with the standard disclaimer.
 from __future__ import annotations
 
 import logging
-import os
 from typing import Optional
+
+from nlp.shared.azure_openai_client import chat_completion, read_env
 
 logger = logging.getLogger(__name__)
 
-VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000")
-VLLM_MODEL    = os.environ.get("VLLM_TEXT_MODEL", "mistralai/Mistral-7B-Instruct-v0.3")
 MAX_FK_GRADE  = 8.0
 DISCLAIMER    = (
     "\n\n---\n**Important:** Only a doctor can diagnose you — "
@@ -47,10 +46,10 @@ def generate_layman_compass(
 
     Returns (text, fk_grade_level).
     Retries with stricter prompt if grade > 8.
-    Falls back to template if vLLM unavailable.
+    Falls back to template if Azure OpenAI is unavailable.
     """
     for attempt in range(max_attempts):
-        text = _call_vllm_layman(
+        text = _call_azure_layman(
             router_output, interview_result, lab_report,
             simplify_more=(attempt > 0)
         )
@@ -69,31 +68,21 @@ def generate_layman_compass(
     return text + DISCLAIMER, grade
 
 
-def _call_vllm_layman(router_output, interview_result, lab_report, simplify_more=False) -> Optional[str]:
-    try:
-        import requests
-        prompt = _build_layman_prompt(router_output, interview_result, lab_report)
-        if simplify_more:
-            prompt = "Use only very simple words. Imagine explaining to a 12-year-old.\n\n" + prompt
+def _call_azure_layman(router_output, interview_result, lab_report, simplify_more=False) -> Optional[str]:
+    prompt = _build_layman_prompt(router_output, interview_result, lab_report)
+    if simplify_more:
+        prompt = "Use only very simple words. Imagine explaining to a 12-year-old.\n\n" + prompt
 
-        response = requests.post(
-            f"{VLLM_BASE_URL}/v1/chat/completions",
-            json={
-                "model":    VLLM_MODEL,
-                "messages": [
-                    {"role": "system", "content": LAYMAN_SYSTEM_PROMPT},
-                    {"role": "user",   "content": prompt},
-                ],
-                "max_tokens": 400,
-                "temperature": 0.3,
-            },
-            timeout=60,
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
-    except Exception as e:
-        logger.warning(f"vLLM Layman generation failed: {e}")
-        return None
+    return chat_completion(
+        messages=[
+            {"role": "system", "content": LAYMAN_SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        deployment=read_env("AZURE_OPENAI_DEPLOYMENT_GPT4O"),
+        max_tokens=400,
+        temperature=0.3,
+        timeout=60,
+    )
 
 
 def _build_layman_prompt(router_output, interview_result, lab_report) -> str:
