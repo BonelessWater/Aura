@@ -145,34 +145,44 @@ const ExpandableSection = ({ children, isOpen, onToggle, title, icon: Icon, colo
   </div>
 );
 
-const MiniChart = ({ data, color, label, unit, current, normal, onClick }: {
+const MiniChart = ({ data, color, label, unit, current, normal, description, onClick }: {
   data: { month: string; value: number }[]; color: string; label: string;
-  unit: string; current: string; normal: string; onClick: () => void;
-}) => (
-  <button onClick={onClick} className="dashboard-card p-4 hover:border-white/[0.12] transition-all text-left w-full group">
-    <div className="flex items-center justify-between mb-2">
-      <span className="text-xs font-medium text-[#F0F2F8]">{label}</span>
-      <span className="text-[10px] text-[#8A93B2] group-hover:text-white transition-colors">Click to expand</span>
-    </div>
-    <div className="h-16 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-          <defs>
-            <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <Area type="monotone" dataKey="value" stroke={color} strokeWidth={2} fill={`url(#grad-${label})`} dot={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-    <div className="flex items-center justify-between mt-2">
-      <span className="text-xs font-mono" style={{ color }}>{current} <span className="text-[#8A93B2]">{unit}</span></span>
-      <span className="text-[10px] text-[#8A93B2]">Normal: {normal}</span>
-    </div>
-  </button>
-);
+  unit: string; current: string; normal: string; description: string; onClick: () => void;
+}) => {
+  const first = data[0]?.value ?? 0;
+  const last = data[data.length - 1]?.value ?? 0;
+  const goingUp = last >= first;
+  return (
+    <button onClick={onClick} className="dashboard-card p-4 hover:border-white/[0.12] transition-all text-left w-full group space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-[#F0F2F8]">{label}</span>
+        <span className="text-[10px] text-[#8A93B2] group-hover:text-white transition-colors flex items-center gap-1">
+          Tap to see graph
+        </span>
+      </div>
+
+      {/* Trend indicator */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full" style={{ backgroundColor: `${color}18` }}>
+          {goingUp
+            ? <TrendingUp className="w-4 h-4" style={{ color }} />
+            : <TrendingUp className="w-4 h-4 rotate-180" style={{ color }} />}
+        </div>
+        <div>
+          <p className="text-xs font-medium" style={{ color }}>
+            {goingUp ? 'Going up' : 'Going down'}
+          </p>
+          <p className="text-[10px] text-[#8A93B2]">
+            {current} {unit} &nbsp;&middot;&nbsp; normal: {normal}
+          </p>
+        </div>
+      </div>
+
+      {/* Plain description */}
+      <p className="text-[11px] text-[#C8CDE0] leading-snug">{description}</p>
+    </button>
+  );
+};
 
 
 // --- Floating Dock ---
@@ -581,38 +591,54 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     className="overflow-hidden"
                   >
-                    <div className="dashboard-card p-6 space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-[#F0F2F8] flex items-center gap-2">
-                          <Microscope className="w-4 h-4 text-[#7B61FF]" />
-                          How we got 92%
-                        </h4>
-                        <button onClick={() => setExpandedScore(null)} className="text-xs text-[#8A93B2] hover:text-white transition-colors">Close</button>
+                    <div className="dashboard-card p-6 space-y-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-[#F0F2F8]">Here's what went into your score</h4>
+                          <p className="text-xs text-[#8A93B2] mt-0.5">We looked at 5 types of evidence and measured how strongly each one pointed to a pattern.</p>
+                        </div>
+                        <button onClick={() => setExpandedScore(null)} className="text-xs text-[#8A93B2] hover:text-white transition-colors shrink-0 mt-0.5">Close</button>
                       </div>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Contributing Factors Bar Chart */}
-                        <div>
-                          <p className="text-xs text-[#8A93B2] mb-3">Contributing factors (weighted)</p>
-                          <div className="h-52">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={scoreBreakdownData} layout="vertical" margin={{ top: 0, right: 10, bottom: 0, left: 80 }}>
-                                <XAxis type="number" domain={[0, 100]} tick={{ fill: '#8A93B2', fontSize: 11 }} axisLine={false} tickLine={false} />
-                                <YAxis type="category" dataKey="factor" tick={{ fill: '#F0F2F8', fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
-                                <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={16}>
-                                  {scoreBreakdownData.map((entry, i) => (
-                                    <Cell key={i} fill={entry.color} fillOpacity={0.8} />
-                                  ))}
-                                </Bar>
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        {/* Patient-friendly evidence rows */}
+                        <div className="space-y-4">
+                          {[
+                            { name: 'Your blood tests', detail: 'Markers like CRP, WBC, and ANA all pointed clearly in the same direction.', score: 94, weight: 35, color: '#7B61FF' },
+                            { name: 'Your reported symptoms', detail: 'Joint pain, fatigue, and your rash pattern closely match known profiles.', score: 88, weight: 25, color: '#3ECFCF' },
+                            { name: 'Photo analysis', detail: 'The facial rash you shared was identified as consistent with a malar rash.', score: 95, weight: 20, color: '#F4A261' },
+                            { name: 'How long symptoms have lasted', detail: 'Symptoms building over 18+ months fits the timeline seen in research cases.', score: 90, weight: 12, color: '#52D0A0' },
+                            { name: 'Published research match', detail: 'Cases with a similar profile appear frequently in autoimmune literature.', score: 87, weight: 8, color: '#E07070' },
+                          ].map((item) => {
+                            const signal = item.score >= 90 ? 'Very strong' : item.score >= 80 ? 'Strong' : 'Moderate';
+                            return (
+                              <div key={item.name} className="space-y-1.5">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-[#F0F2F8] font-medium">{item.name}</span>
+                                  <span className="text-[#8A93B2]">{item.weight}% of score</span>
+                                </div>
+                                <div className="h-1.5 w-full rounded-full bg-white/[0.07]">
+                                  <motion.div
+                                    className="h-1.5 rounded-full"
+                                    style={{ backgroundColor: item.color }}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${item.score}%` }}
+                                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                                  />
+                                </div>
+                                <div className="flex items-start justify-between gap-2 text-[10px]">
+                                  <span className="text-[#8A93B2] leading-snug">{item.detail}</span>
+                                  <span className="shrink-0 font-semibold" style={{ color: item.color }}>{signal}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
 
-                        {/* Radar Chart */}
+                        {/* Radar Chart — unchanged */}
                         <div>
                           <p className="text-xs text-[#8A93B2] mb-3">Pattern alignment across markers</p>
-                          <div className="h-52">
+                          <div className="h-56">
                             <ResponsiveContainer width="100%" height="100%">
                               <RadarChart data={radarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
                                 <PolarGrid stroke="#2A2E3B" />
@@ -625,17 +651,9 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
                         </div>
                       </div>
 
-                      {/* Weight breakdown pills */}
-                      <div className="flex flex-wrap gap-2">
-                        {scoreBreakdownData.map((item) => (
-                          <div key={item.factor} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                            <span className="text-[#8A93B2]">{item.factor}</span>
-                            <span className="font-mono text-[#F0F2F8]">{item.weight}%</span>
-                            <span className="text-[#8A93B2]">weight</span>
-                          </div>
-                        ))}
-                      </div>
+                      <p className="text-xs text-[#8A93B2] pt-3 border-t border-white/[0.05]">
+                        Blood tests carry the most weight because they give us the most objective evidence. No single factor decides your score — everything you shared added up together.
+                      </p>
                     </div>
                   </motion.div>
                 )}
@@ -646,32 +664,36 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     className="overflow-hidden"
                   >
-                    <div className="dashboard-card p-6 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-[#F0F2F8] flex items-center gap-2">
-                          <Microscope className="w-4 h-4 text-[#F4A261]" />
-                          Closest condition match — why 65%
-                        </h4>
-                        <button onClick={() => setExpandedScore(null)} className="text-xs text-[#8A93B2] hover:text-white transition-colors">Close</button>
+                    <div className="dashboard-card p-6 space-y-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-[#F0F2F8]">Why this condition came up — and what's still missing</h4>
+                          <p className="text-xs text-[#8A93B2] mt-0.5">Out of everything we compared your data to, one condition matched most closely.</p>
+                        </div>
+                        <button onClick={() => setExpandedScore(null)} className="text-xs text-[#8A93B2] hover:text-white transition-colors shrink-0 mt-0.5">Close</button>
                       </div>
+
                       <p className="text-sm text-[#8A93B2] leading-relaxed">
-                        Out of all the conditions we compared your data to, <TooltipTerm term="Systemic Lupus Erythematosus (SLE)" def="An autoimmune disease where your immune system mistakenly attacks healthy tissue, causing widespread inflammation." /> was the closest match.
-                        65% means a partial — not definitive — match: your <TooltipTerm term="CRP" def="C-Reactive Protein — a blood marker that goes up when there's inflammation in your body." /> trend and <TooltipTerm term="malar rash" def="A butterfly-shaped rash across the cheeks and nose, commonly associated with Lupus." /> are strong indicators,
-                        but some key tests (<TooltipTerm term="complement levels" def="Proteins in your blood that help your immune system. Low levels can indicate autoimmune activity." />, <TooltipTerm term="anti-dsDNA" def="An antibody test that is very specific to Lupus. A positive result strongly supports an SLE diagnosis." />) haven't been done yet.
+                        <TooltipTerm term="Systemic Lupus Erythematosus (SLE)" def="An autoimmune disease where your immune system mistakenly attacks healthy tissue, causing widespread inflammation." /> was the closest match to your profile.
+                        A 65% match means several key signs lined up — but not everything. Some important tests haven't been done yet, so we can't say more than that. Only a doctor can tell you what this means for you.
                       </p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                      <div className="space-y-2">
                         {[
-                          { label: 'Malar Rash', match: 'Strong', pct: 95, color: '#52D0A0' },
-                          { label: 'CRP Trend', match: 'Strong', pct: 88, color: '#52D0A0' },
-                          { label: 'Leukopenia', match: 'Moderate', pct: 72, color: '#F4A261' },
-                          { label: 'Anti-dsDNA', match: 'Untested', pct: 0, color: '#8A93B2' },
+                          { label: 'Facial rash pattern', desc: 'Matches a type of rash strongly associated with Lupus.', status: 'Matched', color: '#52D0A0' },
+                          { label: 'Inflammation levels (CRP)', desc: 'Your CRP has been rising steadily — a clear sign of ongoing inflammation.', status: 'Matched', color: '#52D0A0' },
+                          { label: 'Low white blood cell count', desc: 'Your WBC has been declining, which sometimes occurs in this condition.', status: 'Partial', color: '#F4A261' },
+                          { label: 'Anti-dsDNA antibody test', desc: "This specific blood test hasn't been run yet — it would significantly clarify the picture.", status: 'Not yet tested', color: '#8A93B2' },
                         ].map((item) => (
-                          <div key={item.label} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-center">
-                            <p className="text-[10px] text-[#8A93B2] mb-1">{item.label}</p>
-                            <p className="text-sm font-mono" style={{ color: item.color }}>
-                              {item.pct > 0 ? `${item.pct}%` : '—'}
-                            </p>
-                            <p className="text-[10px] mt-0.5" style={{ color: item.color }}>{item.match}</p>
+                          <div key={item.label} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                            <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: item.color }} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-[#F0F2F8]">{item.label}</span>
+                                <span className="text-[10px] font-semibold shrink-0" style={{ color: item.color }}>{item.status}</span>
+                              </div>
+                              <p className="text-[11px] text-[#8A93B2] mt-0.5 leading-snug">{item.desc}</p>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -689,10 +711,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               className="scroll-target dashboard-card p-8"
             >
-              <h3 className="text-lg font-medium text-[#F0F2F8] mb-6 flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-[#3ECFCF]/10">
-                  <FileText className="w-4 h-4 text-[#3ECFCF]" />
-                </div>
+              <h3 className="text-lg font-medium text-[#F0F2F8] mb-6">
                 What We Found
               </h3>
 
@@ -714,30 +733,30 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
             {/* ============ LAB TRENDS ============ */}
             <div id="lab-trends" className="scroll-target space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-[#F0F2F8] flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-[#7B61FF]/10">
-                    <Activity className="w-4 h-4 text-[#7B61FF]" />
-                  </div>
-                  Lab Trends
+                <h3 className="text-lg font-medium text-[#F0F2F8]">
+                  Your Blood Work
                 </h3>
-                <span className="text-xs text-[#8A93B2]">18-month tracking window</span>
+                <span className="text-xs text-[#8A93B2]">18 months of tracking — tap any card to learn more</span>
               </div>
 
               {/* Mini chart grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <MiniChart
-                  data={crpTrendData} color="#E07070" label="CRP (C-Reactive Protein)"
+                  data={crpTrendData} color="#E07070" label="Inflammation (CRP)"
                   unit="mg/L" current="14.1" normal="< 3.0"
+                  description="Your inflammation marker has been steadily rising over the past 18 months and is currently well above the normal range."
                   onClick={() => setExpandedLab(expandedLab === 'crp' ? null : 'crp')}
                 />
                 <MiniChart
-                  data={wbcTrendData} color="#3ECFCF" label="WBC (White Blood Cells)"
+                  data={wbcTrendData} color="#3ECFCF" label="Immune Cells (WBC)"
                   unit="× 10⁹/L" current="2.8" normal="4.5 – 11.0"
+                  description="Your white blood cell count has been gradually declining and is now below the healthy range. These cells are key to fighting infection."
                   onClick={() => setExpandedLab(expandedLab === 'wbc' ? null : 'wbc')}
                 />
                 <MiniChart
-                  data={anaTrendData} color="#F4A261" label="ANA Titer (log₂)"
+                  data={anaTrendData} color="#F4A261" label="Immune Activation (ANA)"
                   unit="titer" current="1:640" normal="< 1:80"
+                  description="A marker that can indicate your immune system is reacting to your own cells. Yours has risen significantly and is above the threshold doctors watch closely."
                   onClick={() => setExpandedLab(expandedLab === 'ana' ? null : 'ana')}
                 />
               </div>
@@ -750,14 +769,21 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     className="overflow-hidden"
                   >
-                    <div className="dashboard-card p-6 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-[#F0F2F8]">
-                          {expandedLab === 'crp' && 'CRP — Inflammatory Marker Trend'}
-                          {expandedLab === 'wbc' && 'WBC — White Blood Cell Decline'}
-                          {expandedLab === 'ana' && 'ANA — Autoantibody Titer Rise'}
-                        </h4>
-                        <button onClick={() => setExpandedLab(null)} className="text-xs text-[#8A93B2] hover:text-white transition-colors">Close</button>
+                    <div className="dashboard-card p-6 space-y-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-[#F0F2F8]">
+                            {expandedLab === 'crp' && 'Your inflammation level over time'}
+                            {expandedLab === 'wbc' && 'Your immune cell count over time'}
+                            {expandedLab === 'ana' && 'Your immune activation marker over time'}
+                          </h4>
+                          <p className="text-xs mt-0.5" style={{ color: expandedLab === 'crp' ? '#E07070' : expandedLab === 'wbc' ? '#3ECFCF' : '#F4A261' }}>
+                            {expandedLab === 'crp' && 'Currently above normal — trending upward'}
+                            {expandedLab === 'wbc' && 'Currently below normal — trending downward'}
+                            {expandedLab === 'ana' && 'Currently above normal — trending upward'}
+                          </p>
+                        </div>
+                        <button onClick={() => setExpandedLab(null)} className="text-xs text-[#8A93B2] hover:text-white transition-colors shrink-0 mt-0.5">Close</button>
                       </div>
 
                       <div className="h-64">
@@ -786,19 +812,39 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
                         </ResponsiveContainer>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm text-[#8A93B2] leading-relaxed">
-                        {expandedLab === 'crp' && (
-                          <>Your CRP has risen steadily from <span className="text-[#F0F2F8] font-mono">3.2 mg/L</span> to <span className="text-[#E07070] font-mono">14.1 mg/L</span> over 18 months.
-                            Normal range is below 3.0 mg/L. Persistent elevation above 10 mg/L is associated with chronic systemic inflammation and is a key marker in autoimmune conditions <span className="text-[#F4A261] cursor-pointer">[C2]</span>.</>
-                        )}
-                        {expandedLab === 'wbc' && (
-                          <>Your white blood cell count has declined from <span className="text-[#F0F2F8] font-mono">5.8</span> to <span className="text-[#3ECFCF] font-mono">2.8 × 10⁹/L</span>.
-                            Counts below 4.0 indicate leukopenia. This pattern of progressive decline is commonly observed in SLE and other autoimmune disorders where the immune system targets healthy cells <span className="text-[#F4A261] cursor-pointer">[C3]</span>.</>
-                        )}
-                        {expandedLab === 'ana' && (
-                          <>Your ANA titer has risen from <span className="text-[#F0F2F8] font-mono">1:80</span> to <span className="text-[#F4A261] font-mono">1:640</span>.
-                            Titers above 1:160 are considered clinically significant. Rising ANA titers combined with other markers strongly suggest autoimmune activity and warrant specialist evaluation <span className="text-[#F4A261] cursor-pointer">[C1]</span>.</>
-                        )}
+                      <div className="space-y-3">
+                        {/* Plain English explanation */}
+                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] text-sm text-[#8A93B2] leading-relaxed">
+                          {expandedLab === 'crp' && (
+                            <>
+                              <p className="text-[#F0F2F8] font-medium text-xs mb-2">What this is</p>
+                              CRP is a protein your liver releases when there's inflammation somewhere in your body. Think of it like a smoke alarm — the higher it goes, the more your body senses something is wrong.
+                              Yours has been climbing steadily from <span className="text-[#F0F2F8] font-semibold">3.2</span> to <span className="text-[#E07070] font-semibold">14.1 mg/L</span> over 18 months.
+                              Normal is below 3.0. A level that stays this high for this long is one of the clearest signals that your body has been under persistent stress — and it was a major factor in your score.
+                            </>
+                          )}
+                          {expandedLab === 'wbc' && (
+                            <>
+                              <p className="text-[#F0F2F8] font-medium text-xs mb-2">What this is</p>
+                              White blood cells are your body's defense system — they fight infection and keep you healthy. When the count is low, it can mean your immune system is overworked or attacking the wrong things.
+                              Yours has dropped from <span className="text-[#F0F2F8] font-semibold">5.8</span> to <span className="text-[#3ECFCF] font-semibold">2.8</span> — now below the healthy range of 4.5–11.0.
+                              A slow, steady decline like this is something doctors watch closely, particularly in people with autoimmune patterns.
+                            </>
+                          )}
+                          {expandedLab === 'ana' && (
+                            <>
+                              <p className="text-[#F0F2F8] font-medium text-xs mb-2">What this is</p>
+                              ANA stands for antinuclear antibodies — basically, proteins your immune system makes when it starts reacting to parts of your own cells instead of outside invaders.
+                              Yours has risen from <span className="text-[#F0F2F8] font-semibold">1:80</span> to <span className="text-[#F4A261] font-semibold">1:640</span>. Anything above 1:160 is considered worth investigating.
+                              Rising ANA on its own isn't a diagnosis — but combined with your other results, it's a pattern a doctor needs to look at.
+                            </>
+                          )}
+                        </div>
+                        {/* What to do */}
+                        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-[#7B61FF]/[0.06] border border-[#7B61FF]/20 text-xs text-[#8A93B2]">
+                          <Info className="w-3.5 h-3.5 text-[#7B61FF] mt-0.5 shrink-0" />
+                          <span>These numbers are from your uploaded records. A doctor can tell you exactly what they mean in the context of your full health history.</span>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -808,110 +854,79 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
 
             <div className="gradient-divider" />
 
-            {/* ============ HOW WE KNOW (Evidence + Methodology inline) ============ */}
-            <ExpandableSection
-              isOpen={showEvidence} onToggle={() => setShowEvidence(!showEvidence)}
-              title="How we know — sources & method" icon={BookMarked} color="#F4A261" badge={`${citations.length} studies`}
-            >
-              <div className="space-y-6">
-                {/* Plain English methodology */}
-                <div className="space-y-2 text-sm text-[#8A93B2] leading-relaxed">
-                  <p className="text-[#F0F2F8] font-medium text-xs uppercase tracking-wider mb-3">How AuRA works</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {[
-                      { step: '1', title: 'We read your data', desc: 'Your uploaded labs, symptoms, and photos are processed right here on your device. Nothing is sent anywhere.' },
-                      { step: '2', title: 'We compare it', desc: 'Your data is compared to patterns found in peer-reviewed medical studies to find the closest matches.' },
-                      { step: '3', title: 'We show you the results', desc: 'The scores above show how closely your data matches known patterns — with full transparency into how each factor contributed.' },
-                    ].map((item) => (
-                      <div key={item.step} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="w-6 h-6 rounded-full bg-[#7B61FF]/10 text-[#7B61FF] text-xs font-mono flex items-center justify-center">{item.step}</span>
-                          <span className="text-[#F0F2F8] font-medium">{item.title}</span>
-                        </div>
-                        <p>{item.desc}</p>
-                      </div>
-                    ))}
-                  </div>
+            {/* ============ WHAT IT MEANS ============ */}
+            <div id="next-steps" className="scroll-target">
+              <div className="dashboard-card overflow-hidden">
+
+                {/* Header */}
+                <div className="px-8 pt-8 pb-6 border-b border-white/[0.05]">
+                  <h3 className="text-lg font-semibold text-[#F0F2F8]">
+                    What This Means For You
+                  </h3>
+                  <p className="text-sm text-[#8A93B2] mt-1.5">A plain-English summary of what AuRA found and what to do next.</p>
                 </div>
 
-                {/* Citations */}
-                <div>
-                  <p className="text-[#F0F2F8] font-medium text-xs uppercase tracking-wider mb-3">Studies we referenced</p>
-                  <div className="space-y-2">
-                    {citations.map((cite) => (
-                      <div key={cite.id} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors group">
-                        <span className="text-xs font-mono text-[#F4A261] mt-0.5 flex-shrink-0">[{cite.id}]</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-[#F0F2F8] leading-snug">{cite.title}</p>
-                          <p className="text-xs text-[#8A93B2] mt-1">{cite.journal} ({cite.year})</p>
-                        </div>
-                        <button className="flex-shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/[0.04] transition-all">
-                          <ExternalLink className="w-3.5 h-3.5 text-[#8A93B2]" />
-                        </button>
-                      </div>
-                    ))}
+                <div className="p-8 space-y-6">
+
+                  {/* Finding — most prominent */}
+                  <div className="rounded-2xl border border-[#3ECFCF]/20 bg-[#3ECFCF]/[0.04] p-5 space-y-2">
+                    <p className="text-xs font-semibold text-[#3ECFCF] uppercase tracking-wider">What we found</p>
+                    <p className="text-sm text-[#C8CDE0] leading-relaxed">
+                      Your inflammation marker (CRP) has been rising steadily for 18 months, your immune cell count has been falling, and your immune activation marker (ANA) is significantly elevated. Together, this pattern closely matches what's seen in people with autoimmune conditions in published research.
+                    </p>
                   </div>
-                </div>
-              </div>
-            </ExpandableSection>
 
-            <div className="gradient-divider" />
-
-            {/* ============ WHAT IT MEANS + IMPORTANT TO KNOW ============ */}
-            <div id="next-steps" className="scroll-target space-y-6">
-              {/* What it means — direct text, no expandable cards */}
-              <div className="dashboard-card p-8 space-y-6">
-                <h3 className="text-lg font-medium text-[#F0F2F8] flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-[#3ECFCF]/10">
-                    <MessageSquare className="w-4 h-4 text-[#3ECFCF]" />
+                  {/* Recommended action */}
+                  <div className="rounded-2xl border border-[#7B61FF]/20 bg-[#7B61FF]/[0.04] p-5 space-y-2">
+                    <p className="text-xs font-semibold text-[#7B61FF] uppercase tracking-wider">Your recommended next step</p>
+                    <p className="text-sm text-[#C8CDE0] leading-relaxed">
+                      See a Rheumatologist. They specialize in exactly the kind of patterns we found and can order the specific tests needed to figure out what's really going on — things like anti-dsDNA and complement levels that haven't been checked yet.
+                    </p>
                   </div>
-                  What This Means For You
-                </h3>
 
-                <div className="space-y-4">
-                  {nextStepsData.map((step, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg flex-shrink-0 mt-0.5" style={{ backgroundColor: `${step.color}15` }}>
-                        <step.icon className="w-4 h-4" style={{ color: step.color }} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-[#F0F2F8] mb-1">{step.title}</p>
-                        <p className="text-sm text-[#8A93B2] leading-relaxed">{step.detail}</p>
-                        {step.action && (
-                          <span
-                            onClick={() => step.action!.onClick()}
-                            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 mt-2 rounded-lg bg-[#7B61FF]/10 text-[#7B61FF] hover:bg-[#7B61FF]/20 transition-colors cursor-pointer"
-                          >
-                            {step.action.label} <ChevronDown className="w-3 h-3 -rotate-90" />
-                          </span>
-                        )}
-                      </div>
+                  {/* SOAP note callout */}
+                  <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 space-y-1">
+                      <p className="text-sm font-semibold text-[#F0F2F8]">Your doctor summary is ready</p>
+                      <p className="text-sm text-[#8A93B2] leading-relaxed">
+                        We've prepared a structured clinical note from your labs, symptoms, and photos — formatted the way doctors expect to see it. Hand it to any doctor to get the conversation started faster.
+                      </p>
+                      <span
+                        onClick={onViewSOAP}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 mt-2 rounded-lg bg-[#F4A261]/10 text-[#F4A261] hover:bg-[#F4A261]/20 transition-colors cursor-pointer"
+                      >
+                        View Doctor Summary <ChevronDown className="w-3 h-3 -rotate-90" />
+                      </span>
+                  </div>
+
+                  {/* Reassurance block */}
+                  <div className="rounded-2xl border border-[#E07070]/15 bg-[#E07070]/[0.04] p-5 space-y-3">
+                    <p className="text-xs font-semibold text-[#E07070] uppercase tracking-wider">Important — please read this</p>
+                    <div className="space-y-2 text-sm text-[#C8CDE0] leading-relaxed">
+                      <p>
+                        <span className="font-semibold text-[#F0F2F8]">This is not a diagnosis.</span> AuRA matches patterns in data — it cannot tell you what condition you have. Only a licensed doctor can do that after a proper clinical evaluation.
+                      </p>
+                      <p>
+                        The 92% score means your data <span className="italic">strongly resembles</span> autoimmune profiles in research. The 65% SLE match means it was the closest fit we found — not that you have SLE. Other conditions can look exactly the same.
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Important to know — direct text, no expandable cards */}
-              <div className="dashboard-card glow-rose p-8 space-y-4 border-[#E07070]/10">
-                <h3 className="text-lg font-medium text-[#F0F2F8] flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-[#E07070]/10">
-                    <ShieldCheck className="w-4 h-4 text-[#E07070]" />
                   </div>
-                  Important To Know
-                </h3>
 
-                <div className="space-y-4">
-                  {notMeanData.map((item, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg flex-shrink-0 mt-0.5" style={{ backgroundColor: `${item.color}15` }}>
-                        <item.icon className="w-4 h-4" style={{ color: item.color }} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-[#F0F2F8] mb-1">{item.title}</p>
-                        <p className="text-sm text-[#8A93B2] leading-relaxed">{item.detail}</p>
-                      </div>
-                    </div>
-                  ))}
+                  {/* References — compact footer */}
+                  <div className="space-y-2 pt-1">
+                    <p className="text-[10px] uppercase tracking-widest text-[#6A7390] font-medium">Research referenced</p>
+                    <ul className="space-y-1.5">
+                      {citations.map((cite) => (
+                        <li key={cite.id} className="flex items-start gap-2">
+                          <span className="font-mono text-[10px] text-[#F4A261] shrink-0 mt-0.5">[{cite.id}]</span>
+                          <p className="text-[11px] text-[#6A7390] leading-snug">
+                            {cite.title}
+                            <span className="text-[#52536A]"> — {cite.journal}, {cite.year}</span>
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -921,10 +936,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
               className="dashboard-card p-6 border-[#52D0A0]/20"
             >
-              <h4 className="font-medium text-[#52D0A0] flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-lg bg-[#52D0A0]/10">
-                  <MapPin className="w-4 h-4 text-[#52D0A0]" />
-                </div>
+              <h4 className="font-medium text-[#52D0A0] mb-4">
                 Recommended Doctor
               </h4>
               <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
@@ -952,10 +964,7 @@ export const ResultsDashboard = ({ onViewSOAP, onViewSpecialists, onViewCommunit
               className="dashboard-card p-6 border-[#3ECFCF]/20"
             >
               <div className="flex justify-between items-start mb-4">
-                <h4 className="font-medium text-[#3ECFCF] flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-[#3ECFCF]/10">
-                    <MessageSquare className="w-4 h-4 text-[#3ECFCF]" />
-                  </div>
+                <h4 className="font-medium text-[#3ECFCF]">
                   What to say at your next appointment
                 </h4>
               </div>
