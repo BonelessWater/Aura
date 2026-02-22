@@ -5,7 +5,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from backend.config import Settings, get_settings, vector_search_available
+from backend.config import (
+    Settings,
+    databricks_available,
+    get_settings,
+    vector_search_available,
+)
 from backend.session import get_or_create_session, push_event
 from backend.utils.background import create_job, get_job
 from backend.utils.file_handling import save_uploads
@@ -26,7 +31,8 @@ async def full_pipeline(
 ):
     """
     End-to-end pipeline in a single request.
-    Runs: extract → interview → (research if vector search available) → route → translate.
+    Runs: extract → interview → (research if vector search available) → route → translate
+    → (report if Databricks available).
     Dispatched as a background task; use GET /stream/{patient_id} or GET /jobs/{job_id}.
     """
     if not pdfs and not symptom_text.strip():
@@ -90,6 +96,9 @@ async def _run_full_pipeline(
         push_event(patient_id, {"type": "progress", "phase": phase, "detail": detail})
 
     try:
+        report_output = None
+        report_error: str | None = None
+
         # ── Phase 1: Extract ──────────────────────────────────────────────────
         if pdf_contents:
             _emit("extract", "Saving PDF files")
@@ -206,6 +215,20 @@ async def _run_full_pipeline(
         session.translator_output = translator_output
         _emit("translate", "Translation complete")
 
+        # ── Phase 6: Report (optional — skip if Databricks unavailable) ─────
+        if databricks_available():
+            _emit("report", "Generating medical research report")
+            try:
+                from nlp.reportagent.pipeline import generate_report
+
+                report_output = await generate_report(patient_id)
+                _emit("report", "Report generation complete")
+            except Exception as report_exc:
+                report_error = str(report_exc)
+                _emit("report", f"Report generation failed: {report_error}")
+        else:
+            _emit("report", "Skipped — Databricks not configured")
+
         # ── Done ──────────────────────────────────────────────────────────────
         job.result = {
             "lab_report": session.lab_report.model_dump(mode="json") if session.lab_report else None,
@@ -213,6 +236,8 @@ async def _run_full_pipeline(
             "research_result": session.research_result.model_dump(mode="json") if session.research_result else None,
             "router_output": session.router_output.model_dump(mode="json") if session.router_output else None,
             "translator_output": session.translator_output.model_dump(mode="json") if session.translator_output else None,
+            "report_output": report_output.model_dump(mode="json") if report_output else None,
+            "report_error": report_error,
         }
         job.status = "done"
         push_event(patient_id, {"type": "done", "job_id": job_id})

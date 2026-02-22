@@ -31,8 +31,8 @@ from nlp.shared.schemas import (
 
 logger = logging.getLogger(__name__)
 
-# Regex for person_id validation: alphanumeric + underscores only
-_VALID_ID_RE = re.compile(r"^[A-Za-z0-9_]+$")
+# Regex for person_id validation: alphanumeric + underscore + hyphen
+_VALID_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 def hydrate_patient(person_id: str) -> PatientBundle:
@@ -96,7 +96,7 @@ def _validate_person_id(person_id: str) -> None:
     if not person_id or not _VALID_ID_RE.match(person_id):
         raise ValueError(
             f"Invalid person_id format: '{person_id}'. "
-            "Must be alphanumeric with underscores only."
+            "Must be alphanumeric with underscores or hyphens only."
         )
 
 
