@@ -1,7 +1,8 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./Layout";
 import { Home } from "./views/Home";
-import { ResultsDashboard } from "./components/results/ResultsDashboard";
+import { Login } from "./views/Login";
+import { DashboardPage } from "./views/DashboardPage";
 import { Vault } from "./views/Vault";
 import { ClinicianPortal } from "./views/ClinicianPortal";
 
@@ -15,8 +16,12 @@ export const router = createBrowserRouter([
         Component: Home,
       },
       {
+        path: "login",
+        Component: Login,
+      },
+      {
         path: "dashboard",
-        Component: ResultsDashboard,
+        Component: DashboardPage,
       },
       {
         path: "vault",

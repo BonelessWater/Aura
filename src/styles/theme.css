@@ -45,6 +45,17 @@
     letter-spacing: 0.02em;
   }
 
+  /* Hide native scrollbar — replaced by custom BoneScrollbar component */
+  * {
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari/Edge */
+  }
+
   /* Focus states for accessibility */
   *:focus-visible {
     outline: 2px solid #2563EB;
