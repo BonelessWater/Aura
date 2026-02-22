@@ -240,6 +240,7 @@ const NAV_SECTIONS = [
   { id: 's-problem',   label: 'The Problem' },
   { id: 's-dataset',   label: 'Data' },
   { id: 's-model',     label: 'The Model' },
+  { id: 's-nlp',       label: 'NLP Evaluation' },
   { id: 's-early',     label: 'Early Detection' },
   { id: 's-impact',    label: 'Impact' },
   { id: 's-explore',   label: 'Exploration' },
@@ -491,85 +492,6 @@ export const Present = () => {
 
       <Divider />
 
-      {/* ── 3. THE MODEL ─────────────────────────────────────────────────── */}
-      <section id="s-model" className="py-32 px-6">
-        <div className="max-w-6xl mx-auto w-full">
-
-          <FadeIn className="text-center mb-8">
-            <SectionLabel>The Solution</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
-              A hierarchical XGBoost pipeline that{' '}
-              <span className="bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] bg-clip-text text-transparent">
-                sees what doctors miss.
-              </span>
-            </h2>
-            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto">
-              Trained on 48K patients, ingesting routine labs every patient already has.
-            </p>
-          </FadeIn>
-
-          {/* Pipeline */}
-          <FadeIn delay={0.05} className="mb-16">
-            <PipelineVisual />
-          </FadeIn>
-
-          {/* AUC score cards — prominent Apple-style row */}
-          <FadeIn delay={0.1} className="mb-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Systemic AUC', val: '0.963', color: '#7B61FF' },
-                { label: 'Healthy AUC', val: '0.933', color: '#52D0A0' },
-                { label: 'Endocrine AUC', val: '0.880', color: '#F4A261' },
-                { label: 'Macro AUC', val: '0.897', color: '#3ECFCF' },
-              ].map((m, i) => (
-                <motion.div
-                  key={m.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex flex-col items-center py-7 px-4 rounded-2xl border backdrop-blur-md relative overflow-hidden"
-                  style={{ borderColor: `${m.color}35`, background: `${m.color}0D` }}
-                >
-                  <div
-                    className="absolute top-0 left-4 right-4 h-[2px] rounded-full"
-                    style={{ background: m.color }}
-                  />
-                  <span className="font-display text-4xl font-semibold tracking-[0.04em] mb-1.5" style={{ color: m.color }}>{m.val}</span>
-                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{m.label}</span>
-                </motion.div>
-              ))}
-            </div>
-          </FadeIn>
-
-          {/* Feature importance + ROC side by side */}
-          <div className="grid md:grid-cols-2 gap-8 mb-10">
-            <FadeIn delay={0.1}>
-              <ChartCard
-                src="/figures/08_feature_importance.png"
-                caption="Feature importance (gain): CRP and ESR dominate, confirming inflammation markers as key signals"
-              />
-            </FadeIn>
-            <FadeIn delay={0.18}>
-              <ChartCard
-                src="/figures/07_roc_curves.png"
-                caption="ROC curves by disease cluster: Systemic AUC 0.963, Healthy AUC 0.933"
-              />
-            </FadeIn>
-          </div>
-
-          {/* Model comparison */}
-          <FadeIn delay={0.1}>
-            <WideChartCard
-              src="/figures/04_model_comparison.png"
-              caption="Model comparison: XGBoost leads with macro AUC 0.897 across LR, LightGBM, Random Forest, and CatBoost"
-            />
-          </FadeIn>
-        </div>
-      </section>
-
-      <Divider />
-
       {/* ── 4. THE DATASET ───────────────────────────────────────────────── */}
       <section id="s-dataset" className="py-32 px-6">
         <div className="max-w-6xl mx-auto w-full">
@@ -657,6 +579,185 @@ export const Present = () => {
               src="/figures/01_demographics.png"
               caption="48,503 patients across 4 disease clusters: age and sex breakdown"
             />
+          </FadeIn>
+        </div>
+      </section>
+
+      <Divider />
+
+      {/* ── 4. THE MODEL ─────────────────────────────────────────────────── */}
+      <section id="s-model" className="py-32 px-6">
+        <div className="max-w-6xl mx-auto w-full">
+
+          <FadeIn className="text-center mb-8">
+            <SectionLabel>The Solution</SectionLabel>
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
+              A hierarchical XGBoost pipeline that{' '}
+              <span className="bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] bg-clip-text text-transparent">
+                sees what doctors miss.
+              </span>
+            </h2>
+            <p className="text-[#8A93B2] text-lg max-w-xl mx-auto">
+              Trained on 48K patients, ingesting routine labs every patient already has.
+            </p>
+          </FadeIn>
+
+          {/* Pipeline */}
+          <FadeIn delay={0.05} className="mb-16">
+            <PipelineVisual />
+          </FadeIn>
+
+          {/* AUC score cards — prominent Apple-style row */}
+          <FadeIn delay={0.1} className="mb-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Systemic AUC', val: '0.963', color: '#7B61FF' },
+                { label: 'Healthy AUC', val: '0.933', color: '#52D0A0' },
+                { label: 'Endocrine AUC', val: '0.880', color: '#F4A261' },
+                { label: 'Macro AUC', val: '0.897', color: '#3ECFCF' },
+              ].map((m, i) => (
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col items-center py-7 px-4 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                  style={{ borderColor: `${m.color}35`, background: `${m.color}0D` }}
+                >
+                  <div
+                    className="absolute top-0 left-4 right-4 h-[2px] rounded-full"
+                    style={{ background: m.color }}
+                  />
+                  <span className="font-display text-4xl font-semibold tracking-[0.04em] mb-1.5" style={{ color: m.color }}>{m.val}</span>
+                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{m.label}</span>
+                </motion.div>
+              ))}
+            </div>
+          </FadeIn>
+
+          {/* Feature importance + ROC side by side */}
+          <div className="grid md:grid-cols-2 gap-8 mb-10">
+            <FadeIn delay={0.1}>
+              <ChartCard
+                src="/figures/08_feature_importance.png"
+                caption="Feature importance (gain): CRP and ESR dominate, confirming inflammation markers as key signals"
+              />
+            </FadeIn>
+            <FadeIn delay={0.18}>
+              <ChartCard
+                src="/figures/07_roc_curves.png"
+                caption="ROC curves by disease cluster: Systemic AUC 0.963, Healthy AUC 0.933"
+              />
+            </FadeIn>
+          </div>
+
+          {/* Model comparison */}
+          <FadeIn delay={0.1}>
+            <WideChartCard
+              src="/figures/04_model_comparison.png"
+              caption="Model comparison: XGBoost leads with macro AUC 0.897 across LR, LightGBM, Random Forest, and CatBoost"
+            />
+          </FadeIn>
+        </div>
+      </section>
+
+      <Divider />
+
+      {/* ── 4b. NLP EVALUATION ───────────────────────────────────────────── */}
+      <section id="s-nlp" className="py-32 px-6">
+        <div className="max-w-6xl mx-auto w-full">
+
+          <FadeIn className="text-center mb-8">
+            <SectionLabel>NLP Evaluation</SectionLabel>
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
+              Clinical notes graded by{' '}
+              <span className="bg-gradient-to-r from-[#52D0A0] to-[#3ECFCF] bg-clip-text text-transparent">
+                a biomedical LLM.
+              </span>
+            </h2>
+            <p className="text-[#8A93B2] text-lg max-w-2xl mx-auto">
+              The final pipeline step — SOAP note generation — is evaluated with BERTScore
+              against ground-truth clinical summaries using OpenBioLLM-8B and roberta-large.
+            </p>
+          </FadeIn>
+
+          {/* BERTScore metric cards */}
+          <FadeIn delay={0.08} className="mb-12">
+            <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+              {[
+                { label: 'BERTScore F1', val: '0.8087', color: '#52D0A0' },
+                { label: 'Precision', val: '0.8155', color: '#7B61FF' },
+                { label: 'Recall', val: '0.8038', color: '#F4A261' },
+              ].map((m, i) => (
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col items-center py-7 px-4 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                  style={{ borderColor: `${m.color}35`, background: `${m.color}0D` }}
+                >
+                  <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full" style={{ background: m.color }} />
+                  <span className="font-display text-4xl font-semibold tracking-[0.04em] mb-1.5" style={{ color: m.color }}>{m.val}</span>
+                  <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{m.label}</span>
+                </motion.div>
+              ))}
+            </div>
+          </FadeIn>
+
+          {/* Two charts side by side: overall + by category */}
+          <div className="grid md:grid-cols-5 gap-8 mb-10">
+            <FadeIn delay={0.1} className="md:col-span-2">
+              <ChartCard
+                src="/figures/nlp_bertscore_overall.png"
+                caption="OpenBioLLM-8B overall BERTScore (roberta-large): F1 0.8087, Precision 0.8155, Recall 0.8038 — all above 0.80 baseline"
+              />
+            </FadeIn>
+            <FadeIn delay={0.15} className="md:col-span-3">
+              <WideChartCard
+                src="/figures/nlp_bertscore_by_category.png"
+                caption="BERTScore F1 by disease category: Systemic avg 0.801 · Gastrointestinal avg 0.812 · Endocrine avg 0.814 — consistent across all three clusters"
+              />
+            </FadeIn>
+          </div>
+
+          {/* Insight callout */}
+          <FadeIn delay={0.18}>
+            <div className="grid sm:grid-cols-3 gap-5">
+              {[
+                {
+                  title: 'Above 0.80 across all metrics',
+                  desc: 'F1, Precision, and Recall all exceed the 0.80 clinical relevance threshold — the notes read like expert summaries.',
+                  color: '#52D0A0',
+                  index: '01',
+                },
+                {
+                  title: 'Consistent across disease clusters',
+                  desc: 'Systemic (0.801), GI (0.812), and Endocrine (0.814) clusters score within 1.5% of each other — no cluster is left behind.',
+                  color: '#3ECFCF',
+                  index: '02',
+                },
+                {
+                  title: 'Biomedical LLM, not generic GPT',
+                  desc: 'OpenBioLLM-8B is fine-tuned on biomedical literature — domain knowledge reflected directly in note quality and terminology precision.',
+                  color: '#7B61FF',
+                  index: '03',
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="p-5 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                  style={{ borderColor: `${item.color}25`, background: `${item.color}08` }}
+                >
+                  <div className="absolute top-0 left-5 right-5 h-[2px] rounded-full" style={{ background: item.color }} />
+                  <span className="font-mono text-[10px] text-[#8A93B2]/40 tracking-widest absolute top-4 right-4">{item.index}</span>
+                  <div className="font-medium text-sm mb-2 mt-3" style={{ color: item.color }}>{item.title}</div>
+                  <div className="text-[#8A93B2] text-xs leading-relaxed">{item.desc}</div>
+                </div>
+              ))}
+            </div>
           </FadeIn>
         </div>
       </section>
