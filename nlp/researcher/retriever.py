@@ -2,16 +2,17 @@
 Retriever — The Researcher, Step 3.
 
 Formulates cluster-targeted sub-queries from a patient bundle
-and queries Databricks Vector Search for the top-50 passages.
+and queries the configured vector backend for the top-50 passages.
 """
 
 from __future__ import annotations
 
 import logging
+import os
+from typing import Any
 from typing import Optional
 
 from nlp.shared.schemas import (
-    BioFingerprint,
     Cluster,
     InterviewResult,
     LabReport,
@@ -22,6 +23,9 @@ from nlp.researcher.embedder import get_embedder, VS_ENDPOINT, VS_INDEX_NAME
 logger = logging.getLogger(__name__)
 
 TOP_K_RETRIEVAL = 50
+AURA_VECTOR_BACKEND = os.environ.get("AURA_VECTOR_BACKEND", "actian").strip().lower()
+ACTIAN_HOST = os.environ.get("ACTIAN_HOST", "100.100.165.29:50051")
+ACTIAN_COLLECTION = os.environ.get("ACTIAN_COLLECTION", "pubmed_chunks")
 
 
 def formulate_queries(
@@ -88,23 +92,130 @@ def retrieve_passages(
         cluster_filter: if provided, filter results to this cluster
         top_k:          number of results per query
     """
+    # Default backend is Actian VectorAI (host:50051), with Databricks fallback.
+    if AURA_VECTOR_BACKEND == "databricks":
+        return _retrieve_from_databricks(queries, cluster_filter, top_k)
+
+    actian_hits = _retrieve_from_actian(queries, cluster_filter, top_k)
+    if actian_hits:
+        return actian_hits
+
+    logger.info("Actian retrieval returned no passages; trying Databricks fallback.")
+    return _retrieve_from_databricks(queries, cluster_filter, top_k)
+
+
+def _retrieve_from_actian(
+    queries: list[str],
+    cluster_filter: Optional[Cluster],
+    top_k: int,
+) -> list[RetrievedPassage]:
+    try:
+        from cortex import CortexClient
+    except Exception as e:
+        logger.error(f"Actian client unavailable: {e}")
+        return []
+
+    try:
+        embedder = get_embedder()
+    except Exception as e:
+        logger.error(f"Embedding model unavailable for Actian retrieval: {e}")
+        return []
+
+    seen: set[str] = set()
+    passages: list[RetrievedPassage] = []
+
+    try:
+        with CortexClient(ACTIAN_HOST) as client:
+            for query in queries:
+                try:
+                    query_vec = embedder.embed_query(query)
+                    hits = client.search(ACTIAN_COLLECTION, query=query_vec, top_k=top_k)
+                except Exception as e:
+                    logger.warning(f"Actian search failed for query '{query[:60]}': {e}")
+                    continue
+
+                for hit in hits or []:
+                    parsed = _parse_actian_hit(hit)
+                    if not parsed:
+                        continue
+                    if parsed.chunk_id in seen:
+                        continue
+                    if cluster_filter and parsed.cluster_tag != cluster_filter:
+                        continue
+                    seen.add(parsed.chunk_id)
+                    passages.append(parsed)
+    except Exception as e:
+        logger.error(f"Actian VectorAI unavailable at {ACTIAN_HOST}: {e}")
+        return []
+
+    passages.sort(key=lambda p: p.score, reverse=True)
+    return passages
+
+
+def _parse_actian_hit(hit: Any) -> Optional[RetrievedPassage]:
+    payload: dict[str, Any] = {}
+    hit_id: Any = None
+    score: Any = None
+
+    if isinstance(hit, dict):
+        payload = hit.get("payload") or {}
+        hit_id = hit.get("id")
+        score = hit.get("score")
+    else:
+        payload = getattr(hit, "payload", None) or {}
+        hit_id = getattr(hit, "id", None)
+        score = getattr(hit, "score", None)
+
+    if not isinstance(payload, dict):
+        payload = {}
+
+    chunk_id = str(payload.get("chunk_id") or hit_id or "")
+    if not chunk_id:
+        return None
+
+    cluster_enum = None
+    cluster_tag = payload.get("cluster_tag")
+    if cluster_tag:
+        try:
+            cluster_enum = Cluster(cluster_tag)
+        except ValueError:
+            cluster_enum = None
+
+    return RetrievedPassage(
+        chunk_id=chunk_id,
+        doi=payload.get("doi"),
+        journal=payload.get("journal"),
+        year=int(payload["year"]) if payload.get("year") is not None else None,
+        section=payload.get("section"),
+        cluster_tag=cluster_enum,
+        text=payload.get("text") or "",
+        score=float(score) if score is not None else 0.0,
+    )
+
+
+def _retrieve_from_databricks(
+    queries: list[str],
+    cluster_filter: Optional[Cluster],
+    top_k: int,
+) -> list[RetrievedPassage]:
     from nlp.shared.databricks_client import get_client
 
-    client   = get_client()
-    embedder = get_embedder()
+    try:
+        embedder = get_embedder()
+    except Exception as e:
+        logger.error(f"Embedding model unavailable for Databricks retrieval: {e}")
+        return []
 
+    client = get_client()
     try:
         index = client.get_vs_index(VS_ENDPOINT, VS_INDEX_NAME)
     except Exception as e:
-        logger.error(f"Vector Search unavailable: {e}")
+        logger.error(f"Databricks Vector Search unavailable: {e}")
         return []
 
-    seen:     set[str] = set()
+    seen: set[str] = set()
     passages: list[RetrievedPassage] = []
-
-    query_filter = (
-        {"cluster_tag": cluster_filter.value} if cluster_filter else None
-    )
+    query_filter = {"cluster_tag": cluster_filter.value} if cluster_filter else None
 
     for query in queries:
         try:
@@ -116,14 +227,14 @@ def retrieve_passages(
                 filters=query_filter,
             )
         except Exception as e:
-            logger.warning(f"VS search failed for query '{query[:60]}': {e}")
+            logger.warning(f"Databricks VS search failed for query '{query[:60]}': {e}")
             continue
 
         for hit in results.get("result", {}).get("data_array", []):
             chunk_id, doi, journal, year, section, cluster_tag, text, score = (
                 hit + [None] * 8
             )[:8]
-            if chunk_id in seen:
+            if not chunk_id or chunk_id in seen:
                 continue
             seen.add(chunk_id)
 
@@ -135,16 +246,15 @@ def retrieve_passages(
                     pass
 
             passages.append(RetrievedPassage(
-                chunk_id    = chunk_id or "",
-                doi         = doi,
-                journal     = journal,
-                year        = int(year) if year else None,
-                section     = section,
-                cluster_tag = cluster_enum,
-                text        = text or "",
-                score       = float(score) if score else 0.0,
+                chunk_id=chunk_id,
+                doi=doi,
+                journal=journal,
+                year=int(year) if year else None,
+                section=section,
+                cluster_tag=cluster_enum,
+                text=text or "",
+                score=float(score) if score else 0.0,
             ))
 
-    # Sort by score descending
     passages.sort(key=lambda p: p.score, reverse=True)
     return passages

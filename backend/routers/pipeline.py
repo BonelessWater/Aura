@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from backend.config import Settings, databricks_available, get_settings
+from backend.config import Settings, get_settings, vector_search_available
 from backend.session import get_or_create_session, push_event
 from backend.utils.background import create_job, get_job
 from backend.utils.file_handling import save_uploads
@@ -26,7 +26,7 @@ async def full_pipeline(
 ):
     """
     End-to-end pipeline in a single request.
-    Runs: extract → interview → (research if Databricks available) → route → translate.
+    Runs: extract → interview → (research if vector search available) → route → translate.
     Dispatched as a background task; use GET /stream/{patient_id} or GET /jobs/{job_id}.
     """
     if not pdfs and not symptom_text.strip():
@@ -157,8 +157,8 @@ async def _run_full_pipeline(
             except OSError:
                 pass
 
-        # ── Phase 3: Research (optional — skip if no Databricks) ──────────────
-        if databricks_available():
+        # ── Phase 3: Research (optional — skip if no vector backend) ──────────
+        if vector_search_available():
             _emit("research", "Running RAG retrieval")
             from nlp.researcher.pipeline import run_researcher
 
@@ -172,7 +172,7 @@ async def _run_full_pipeline(
             session.research_result = research_result
             _emit("research", "Research complete")
         else:
-            _emit("research", "Skipped — Databricks not configured")
+            _emit("research", "Skipped — vector search not configured")
 
         # ── Phase 4: Route ────────────────────────────────────────────────────
         _emit("route", "Scoring cluster alignment and disease candidates")

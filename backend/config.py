@@ -28,3 +28,12 @@ def get_settings() -> Settings:
 
 def databricks_available() -> bool:
     return bool(os.environ.get("DATABRICKS_HOST"))
+
+
+def vector_search_available() -> bool:
+    """
+    Vector retrieval is available if either backend is configured:
+      - Actian VectorAI (`ACTIAN_HOST`)
+      - Databricks Vector Search (`DATABRICKS_HOST`)
+    """
+    return bool(os.environ.get("ACTIAN_HOST") or os.environ.get("DATABRICKS_HOST"))

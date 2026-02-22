@@ -122,6 +122,80 @@ def extract_entities(text: str, nlp=None) -> list[dict]:
     return entities
 
 
+def extract_entities_regex(text: str) -> list[dict]:
+    """
+    Regex fallback when spaCy/scispaCy cannot be loaded.
+    Extracts symptom-like mentions from cluster vocabulary, plus
+    duration/severity/location cues used downstream by relation extraction.
+    """
+    entities: list[dict] = []
+
+    # Import lazily to avoid any dependency churn on module import.
+    try:
+        from nlp.interviewer.cluster_mapper import CLUSTER_VOCABULARY
+        symptom_terms = {
+            term.lower()
+            for terms in CLUSTER_VOCABULARY.values()
+            for term in terms
+        }
+    except Exception:
+        symptom_terms = set()
+
+    severity_terms = {
+        "mild", "moderate", "severe", "extreme", "intense",
+        "intermittent", "persistent", "chronic", "acute",
+        "occasional", "constant", "worsening", "improving",
+        "debilitating", "excruciating",
+    }
+    location_terms = {
+        "knee", "knees", "hip", "hips", "shoulder", "shoulders",
+        "wrist", "wrists", "ankle", "ankles", "finger", "fingers",
+        "joint", "joints", "hand", "hands", "foot", "feet",
+        "elbow", "elbows", "lower back", "upper back", "neck",
+        "abdomen", "stomach", "chest", "skin",
+    }
+
+    def _add_term_matches(terms: set[str], label: str) -> None:
+        for term in sorted(terms, key=len, reverse=True):
+            if not term:
+                continue
+            pattern = re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE)
+            for m in pattern.finditer(text):
+                entities.append({
+                    "text": m.group(0),
+                    "label": label,
+                    "start": m.start(),
+                    "end": m.end(),
+                })
+
+    _add_term_matches(symptom_terms, "SYMPTOM")
+    _add_term_matches(severity_terms, "SEVERITY")
+    _add_term_matches(location_terms, "LOCATION")
+
+    for m in re.finditer(
+        r"\b(?:for|since|past|last|over(?:\s+the)?\s+(?:past|last))\b[^,.;\n]{0,35}",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        entities.append({
+            "text": m.group(0).strip(),
+            "label": "DURATION",
+            "start": m.start(),
+            "end": m.end(),
+        })
+
+    # De-duplicate exact spans/labels.
+    seen: set[tuple[int, int, str]] = set()
+    deduped: list[dict] = []
+    for e in sorted(entities, key=lambda x: (x["start"], x["end"])):
+        key = (e["start"], e["end"], e["label"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(e)
+    return deduped
+
+
 # ── Fine-tuning (run offline, GPU recommended) ───────────────────────────────
 
 def finetune_ner(

@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.config import databricks_available
+from backend.config import vector_search_available
 from backend.session import get_or_create_session, push_event
 from backend.utils.background import create_job, get_job
 
@@ -22,15 +22,15 @@ class ResearchRequest(BaseModel):
 async def research(body: ResearchRequest):
     """
     Run RAG retrieval against the PubMed vector store.
-    Requires a live Databricks Vector Search index; returns 503 if unavailable.
+    Requires a configured vector backend (Actian or Databricks); returns 503 if unavailable.
     Returns a job_id immediately; poll GET /jobs/{job_id} for the result.
     """
-    if not databricks_available():
+    if not vector_search_available():
         raise HTTPException(
             status_code=503,
             detail=(
-                "Databricks Vector Search is not configured. "
-                "Set the DATABRICKS_HOST environment variable."
+                "Vector search is not configured. "
+                "Set ACTIAN_HOST (preferred) or DATABRICKS_HOST."
             ),
         )
 
