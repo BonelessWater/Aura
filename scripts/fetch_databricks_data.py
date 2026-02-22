@@ -24,8 +24,8 @@ WAREHOUSE_ID = "a3f84fea6e440a44"  # Serverless Starter Warehouse
 # Construct the server hostname
 DATABRICKS_HOST = f"{DATABRICKS_WORKSPACE}.cloud.databricks.com"
 
-# Output directory
-DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
+# Output directory — matches where modeling/src/data/loaders.py resolves via _find_project_root()
+DATA_DIR = Path(__file__).parent.parent / "modeling" / "data" / "processed"
 
 # Tables to fetch
 TABLES = {

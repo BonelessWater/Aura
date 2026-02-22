@@ -17,7 +17,7 @@ DATABRICKS_HOST = f"https://{DATABRICKS_WORKSPACE}.cloud.databricks.com"
 
 VOLUME_PATH = "/Volumes/workspace/aura/aura_data"
 
-DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
+DATA_DIR = Path(__file__).parent.parent / "modeling" / "data" / "processed"
 
 FILES = {
     "tier1": ["tier1_core_matrix.parquet"],

@@ -1,3 +1,18 @@
+.claude
+.vscode
+
+# Environment variables
+.env
+
+# Python 
+venv
+__pycache__/
+
+/modeling/data/
+
+# Claude
+.claude/
+
 # Environment & secrets
 .env
 .env.*

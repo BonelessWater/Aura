@@ -80,7 +80,7 @@ class CategoryClassifier:
         self.feature_names = list(X.columns)
 
         # Prepare data
-        X_filled = X.fillna(X.median())
+        X_filled = self._align(X)
         self.label_encoder.fit(self.categories)
         y_encoded = self.label_encoder.transform(y)
 
@@ -90,10 +90,9 @@ class CategoryClassifier:
         # Fit with optional early stopping
         if eval_set is not None:
             X_val, y_val = eval_set
-            X_val_filled = X_val[self.feature_names].fillna(X_val[self.feature_names].median())
+            X_val_filled = self._align(X_val)
             y_val_encoded = self.label_encoder.transform(y_val)
 
-            # Set early stopping in model params
             self.model.set_params(early_stopping_rounds=early_stopping_rounds)
             self.model.fit(
                 X_filled, y_encoded,
@@ -105,10 +104,19 @@ class CategoryClassifier:
 
         return self
 
+    def _align(self, X: pd.DataFrame) -> pd.DataFrame:
+        """
+        Reindex X to exactly self.feature_names, filling any missing columns
+        with NaN, then impute with per-column median. This handles the case
+        where prepare_features drops different columns from train vs val/test
+        due to per-split missingness thresholds.
+        """
+        X_aligned = X.reindex(columns=self.feature_names)
+        return X_aligned.fillna(X_aligned.median())
+
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Predict category labels."""
-        X_filled = X[self.feature_names].fillna(X[self.feature_names].median())
-        y_pred = self.model.predict(X_filled)
+        y_pred = self.model.predict(self._align(X))
         return self.label_encoder.inverse_transform(y_pred)
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
@@ -118,8 +126,7 @@ class CategoryClassifier:
         Returns:
             Array of shape (n_samples, n_categories)
         """
-        X_filled = X[self.feature_names].fillna(X[self.feature_names].median())
-        return self.model.predict_proba(X_filled)
+        return self.model.predict_proba(self._align(X))
 
     def get_category_confidence(
         self,

@@ -44,6 +44,11 @@ class DiseaseClassifier:
         self.feature_names: Optional[List[str]] = None
         self.trained: bool = False
 
+    def _align(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Reindex X to self.feature_names, filling absent columns with median."""
+        X_aligned = X.reindex(columns=self.feature_names)
+        return X_aligned.fillna(X_aligned.median())
+
     def fit(self, X: pd.DataFrame, y: pd.Series, **kwargs):
         """Train on cluster-specific data."""
         if X.empty:
@@ -51,7 +56,7 @@ class DiseaseClassifier:
             return self
 
         self.feature_names = list(X.columns)
-        X_filled = X[self.feature_names].fillna(X[self.feature_names].median())
+        X_filled = self._align(X)
 
         y_series = pd.Series(y).astype(str)
         allowed = set(self.diseases)
@@ -77,16 +82,14 @@ class DiseaseClassifier:
         """Predict disease labels."""
         if not self.trained or self.model is None:
             raise ValueError("DiseaseClassifier is not trained.")
-        X_filled = X[self.feature_names].fillna(X[self.feature_names].median())
-        y_pred = self.model.predict(X_filled)
+        y_pred = self.model.predict(self._align(X))
         return self.label_encoder.inverse_transform(y_pred)
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         """Predict disease probabilities."""
         if not self.trained or self.model is None:
             raise ValueError("DiseaseClassifier is not trained.")
-        X_filled = X[self.feature_names].fillna(X[self.feature_names].median())
-        return self.model.predict_proba(X_filled)
+        return self.model.predict_proba(self._align(X))
 
     def get_disease_confidence(
         self,
