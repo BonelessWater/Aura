@@ -27,7 +27,7 @@ from nlp.shared.schemas import PatientBundle
 logger = logging.getLogger(__name__)
 
 REPORT_MODEL = os.environ.get(
-    "AURA_REPORT_MODEL", "azure:claude-sonnet"
+    "AURA_REPORT_MODEL", "azure:gpt-4o"
 )
 MAX_TOOL_CALLS = int(os.environ.get("AURA_REPORT_MAX_TOOLS", "5"))
 
