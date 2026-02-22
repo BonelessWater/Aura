@@ -17,6 +17,7 @@ class Settings(BaseSettings):
         env_prefix = "AURA_"
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 
 @lru_cache

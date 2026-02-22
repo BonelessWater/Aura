@@ -133,13 +133,7 @@ function HumanBody({
   const groupRef = useRef<THREE.Group>(null);
   const { scene, nodes } = useGLTF(MODEL_PATH) as any;
 
-  // Slow idle rotation
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y =
-        Math.sin(state.clock.elapsedTime * 0.15) * 0.15;
-    }
-  });
+  // No auto-rotation -- user controls spin via OrbitControls
 
   // Map bone names to canonical body_region IDs (matching backend VALID_BODY_REGIONS)
   const boneToRegion = useMemo<Record<string, string>>(() => ({
@@ -416,10 +410,8 @@ function BodyScene({
       <OrbitControls
         enableZoom={false}
         enablePan={false}
-        minPolarAngle={Math.PI * 0.3}
-        maxPolarAngle={Math.PI * 0.7}
-        minAzimuthAngle={-Math.PI * 0.35}
-        maxAzimuthAngle={Math.PI * 0.35}
+        minPolarAngle={Math.PI * 0.15}
+        maxPolarAngle={Math.PI * 0.85}
       />
     </>
   );
@@ -515,8 +507,8 @@ export const BodyModel = ({
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* 3D Canvas */}
-        <div className="flex-1 relative min-h-[400px]">
-          <Canvas camera={{ position: [0, 0.1, 2.2], fov: 40 }}>
+        <div className="lg:w-[55%] relative min-h-[400px]">
+          <Canvas camera={{ position: [0, 0.1, 3.0], fov: 34 }}>
             <BodyScene
               onSelectRegion={(r) => setActiveRegion(r?.id ?? null)}
               activeRegion={activeRegion}
@@ -556,7 +548,7 @@ export const BodyModel = ({
         </div>
 
         {/* Side panel -- region detail */}
-        <div className="lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/[0.06] overflow-y-auto">
+        <div className="lg:flex-1 border-t lg:border-t-0 lg:border-l border-white/[0.06] overflow-y-auto">
           <AnimatePresence mode="wait">
             {selectedRegion ? (
               <motion.div
@@ -651,8 +643,8 @@ export const BodyModel = ({
                     stroke="currentColor"
                     strokeWidth={1.5}
                   >
-                    <circle cx="12" cy="5" r="3" />
-                    <path d="M12 8v8M8 12h8M10 20h4" />
+                    <circle cx="12" cy="4.5" r="2.5" />
+                    <path d="M12 7v6M12 13l-3 7M12 13l3 7M8 11h8" />
                   </svg>
                 </div>
                 <p className="text-sm text-[#F0F2F8] font-medium mb-1">
