@@ -37,3 +37,6 @@ pydantic-ai>=1.0
 tqdm              # Progress bars
 pyyaml            # Config files
 joblib            # Model serialization
+
+# PDF generation
+reportlab>=4.0
