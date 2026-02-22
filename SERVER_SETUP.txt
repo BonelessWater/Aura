@@ -1,0 +1,240 @@
+================================================================================
+  AURA INFERENCE SERVER — SETUP & USAGE GUIDE
+  Using this Windows PC as a remote GPU inference server
+================================================================================
+
+MACHINE DETAILS
+───────────────
+  Hostname:     hackathon PC (Windows 11)
+  GPU:          AMD Radeon RX 9070 XT (16 GB VRAM)
+  WSL Distro:   Ubuntu-24.04 (systemd enabled)
+  Python env:   ~/venv_rocm  (PyTorch ROCm + bitsandbytes + PEFT + transformers)
+  Model:        aaditya/Llama3-OpenBioLLM-8B + LoRA adapter (4-bit quantized)
+  VRAM usage:   ~6 GB at inference time
+  Inference:    ~1-4 seconds per case
+
+
+================================================================================
+1. WHAT'S ALREADY SET UP ON THIS PC
+================================================================================
+
+a) Windows OpenSSH Server (port 22)
+   - Key-based auth only (password disabled)
+   - Default shell: C:\Users\hackathon\wsl_shell.bat
+     → Transparently drops you into WSL Ubuntu-24.04 with bash
+
+b) WSL Ubuntu-24.04
+   - systemd enabled (/etc/wsl.conf → [boot] systemd=true)
+   - Mirrored networking (C:\Users\hackathon\.wslconfig → networkingMode=mirrored)
+   - SSH into Windows port 22 → lands in WSL automatically
+
+c) venv_rocm auto-activation
+   - ~/.bashrc activates ~/venv_rocm BEFORE the non-interactive guard
+   - Works for both interactive SSH sessions AND non-interactive SSH commands
+   - All ROCm/PyTorch/PEFT/transformers packages are available immediately
+
+d) LoRA adapters
+   - Located at: C:\Users\hackathon\Aura\lora_adapters\
+   - WSL path:   /mnt/c/Users/hackathon/Aura/lora_adapters/
+   - Files: adapter_config.json, adapter_model.safetensors, tokenizer files
+
+e) Base model (cached by HuggingFace)
+   - aaditya/Llama3-OpenBioLLM-8B (~16 GB, already downloaded)
+   - HF cache: ~/.cache/huggingface/hub/
+
+
+================================================================================
+2. HOW TO SSH IN FROM YOUR LAPTOP
+================================================================================
+
+PREREQUISITES ON YOUR LAPTOP:
+  - Copy the private key from this PC:
+      C:\Users\hackathon\.ssh\id_ed25519
+    to your laptop at:
+      ~/.ssh/aura_server_key    (or any name you prefer)
+  - Set permissions:
+      chmod 600 ~/.ssh/aura_server_key
+
+FIND THIS PC'S IP ADDRESS (run on this PC):
+  PowerShell:   (Get-NetIPAddress -AddressFamily IPv4 | Where InterfaceAlias -like "Wi-Fi*").IPAddress
+  Or:           ipconfig | findstr "IPv4"
+
+SSH CONFIG (add to ~/.ssh/config on your laptop):
+  Host aura-server
+      HostName <THIS_PCS_IP_ADDRESS>
+      User hackathon
+      IdentityFile ~/.ssh/aura_server_key
+      Port 22
+
+CONNECT:
+  ssh aura-server
+  → You'll land in WSL Ubuntu-24.04 with venv_rocm already active
+
+VERIFY IT WORKS:
+  ssh aura-server "python -c 'import torch; print(torch.cuda.get_device_name(0))'"
+  → Should print: AMD Radeon RX 9070 XT
+
+
+================================================================================
+3. RUNNING INFERENCE (ONE-OFF COMMANDS)
+================================================================================
+
+From your laptop via SSH, run the inference script directly:
+
+  # Single case
+  ssh aura-server "cd /mnt/c/Users/hackathon/Aura && python scripts/run_diagnosis_inference.py \
+    --text 'Patient presents with malar rash, joint pain, photosensitivity, and positive ANA.'"
+
+  # Batch from JSONL file (must exist on the server)
+  ssh aura-server "cd /mnt/c/Users/hackathon/Aura && python scripts/run_diagnosis_inference.py \
+    --file /mnt/c/Users/hackathon/Aura/cases.jsonl --output results.jsonl"
+
+  # Interactive mode
+  ssh -t aura-server "cd /mnt/c/Users/hackathon/Aura && python scripts/run_diagnosis_inference.py --interactive"
+
+
+================================================================================
+4. RUNNING AS A PERSISTENT API SERVER (RECOMMENDED)
+================================================================================
+
+Instead of loading the model every time (takes ~30-60s), run a persistent
+FastAPI server in WSL that keeps the model loaded in VRAM.
+
+STEP 1 — SSH into the server:
+  ssh aura-server
+
+STEP 2 — Start the inference API server in a tmux session:
+  tmux new -s inference
+  cd /mnt/c/Users/hackathon/Aura
+  python scripts/inference_server.py --port 8099
+  # Ctrl+B then D to detach (server keeps running)
+
+  To reattach later:  tmux attach -t inference
+  To stop:            tmux kill-session -t inference
+
+STEP 3 — From your laptop (or the Aura backend), call the API:
+  curl http://<THIS_PCS_IP>:8099/diagnose \
+    -H "Content-Type: application/json" \
+    -d '{"text": "Patient presents with malar rash, joint pain, positive ANA."}'
+
+  Response: {"diagnosis": "Systemic Lupus Erythematosus", "inference_time": 1.23}
+
+NOTE: scripts/inference_server.py does not exist yet — it needs to be created.
+      It should be a small FastAPI wrapper around run_diagnosis_inference.py's
+      load_model() and predict() functions. See Section 7 for what to build.
+
+
+================================================================================
+5. KEEPING WSL ALIVE
+================================================================================
+
+WSL shuts down after ~8 seconds of inactivity by default. To prevent this:
+
+OPTION A — Run a tmux/screen session (keeps WSL alive while something runs)
+  Just having the inference server running in tmux is enough.
+
+OPTION B — Disable WSL auto-shutdown (add to C:\Users\hackathon\.wslconfig):
+  [wsl2]
+  vmIdleTimeout=-1
+
+OPTION C — Scheduled task (Windows Task Scheduler):
+  Create a task that runs every 5 min:
+    wsl -d Ubuntu-24.04 -- echo keepalive
+
+
+================================================================================
+6. PORT FORWARDING / FIREWALL
+================================================================================
+
+With mirrored networking, WSL ports are accessible on the Windows host IP.
+If you start a server on port 8099 inside WSL, it's reachable at:
+  http://<WINDOWS_IP>:8099
+
+FIREWALL: You may need to allow the port through Windows Firewall:
+  PowerShell (Admin):
+    New-NetFirewallRule -DisplayName "Aura Inference API" `
+      -Direction Inbound -Protocol TCP -LocalPort 8099 -Action Allow
+
+If on the SAME local network (e.g., both on hackathon Wi-Fi), this is all
+you need. For remote access over the internet, you'd need port forwarding
+on the router or a tunnel (e.g., Cloudflare Tunnel, ngrok, Tailscale).
+
+
+================================================================================
+7. TODO LIST — WHAT STILL NEEDS TO BE BUILT
+================================================================================
+
+[x] SSH server configured and working (port 22 → WSL)
+[x] venv_rocm auto-activates on SSH login
+[x] Inference script works (run_diagnosis_inference.py)
+[x] Base model + LoRA adapters downloaded and verified
+[x] Mirrored networking enabled
+
+[ ] CREATE: scripts/inference_server.py
+    A lightweight FastAPI wrapper that:
+    - Loads the model once at startup (load_model())
+    - Exposes POST /diagnose endpoint accepting {"text": "..."}
+    - Returns {"diagnosis": "...", "inference_time": float}
+    - Optionally POST /diagnose/batch for multiple cases
+    - Runs on port 8099 (or configurable)
+
+[ ] CREATE: Backend integration (backend/routers/diagnose.py)
+    A FastAPI router for the main Aura backend that:
+    - Calls the inference server at http://localhost:8099/diagnose
+    - Or calls via SSH command as a fallback
+    - Integrates with the existing pipeline
+
+[ ] CREATE: Frontend /test route with chat UI
+    - Chat interface to test the diagnosis model
+    - Sends clinical text to backend → inference server → response
+
+[ ] OPTIONAL: WSL keepalive scheduled task
+    - Not critical if you always have tmux running
+
+[ ] OPTIONAL: Tailscale or Cloudflare Tunnel for remote access
+    - Only needed if your laptop is NOT on the same network
+
+
+================================================================================
+8. QUICK REFERENCE COMMANDS
+================================================================================
+
+  # SSH in
+  ssh aura-server
+
+  # Check GPU
+  ssh aura-server "rocm-smi"
+
+  # Check if model server is running
+  ssh aura-server "curl -s http://localhost:8099/health"
+
+  # Run single inference
+  ssh aura-server "cd /mnt/c/Users/hackathon/Aura && python scripts/run_diagnosis_inference.py --text '...'"
+
+  # Start Aura backend (from WSL)
+  cd /mnt/c/Users/hackathon/Aura && uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+  # Start inference server (from WSL)
+  cd /mnt/c/Users/hackathon/Aura && python scripts/inference_server.py --port 8099
+
+  # Check WSL status (from Windows)
+  wsl --list --running
+
+  # Restart WSL (from Windows PowerShell)
+  wsl --shutdown && wsl -d Ubuntu-24.04
+
+
+================================================================================
+9. IMPORTANT: DO NOT MODIFY
+================================================================================
+
+  - ~/venv_rocm — The ROCm Python environment. Only ADD packages/models, never delete.
+  - ~/.cache/huggingface — Cached models. Don't clear.
+  - C:\Users\hackathon\Aura\lora_adapters — Fine-tuned adapter weights.
+  - C:\Users\hackathon\.wslconfig — WSL networking config.
+  - C:\Users\hackathon\wsl_shell.bat — SSH default shell wrapper.
+  - C:\ProgramData\ssh\sshd_config — Windows SSH server config.
+  - /etc/ssh/sshd_config.d/wsl-ssh.conf — WSL SSH config (port 2222, unused externally).
+  - ~/.bashrc top section — venv_rocm activation block.
+
+================================================================================
