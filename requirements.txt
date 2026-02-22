@@ -30,6 +30,9 @@ databricks-sql-connector  # Databricks Unity Catalog
 jupyterlab>=4.0
 ipywidgets>=8.0
 
+# Agentic report generation
+pydantic-ai>=1.0
+
 # Utilities
 tqdm              # Progress bars
 pyyaml            # Config files
