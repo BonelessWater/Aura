@@ -18,6 +18,9 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from nlp.reportagent.agent import REPORT_MODEL, MAX_TOOL_CALLS, ReportDeps, report_agent
 from nlp.reportagent.data_hydrator import hydrate_patient
 from nlp.reportagent.retrieval_gate import assess_retrieval_quality
