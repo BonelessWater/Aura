@@ -234,6 +234,130 @@ function PipelineVisual() {
   );
 }
 
+// ─── RAG Pipeline Visual ──────────────────────────────────────────────────────
+const RAG_STEPS = [
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="1.5">
+        <path d="M12 2a5 5 0 100 10A5 5 0 0012 2z" />
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeLinecap="round" />
+      </svg>
+    ),
+    label: 'Patient Symptoms',
+    sublabel: 'Free-text input\nfrom the patient',
+    color: '#3ECFCF',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="8" width="18" height="8" rx="2" />
+        <path d="M7 8V6a2 2 0 012-2h6a2 2 0 012 2v2" />
+        <circle cx="8.5" cy="12" r="1" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+        <circle cx="15.5" cy="12" r="1" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+    label: 'SentenceTransformers',
+    sublabel: 'S-PubMedBert\nlocal 768-dim embed',
+    color: '#7B61FF',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="1.5">
+        <ellipse cx="12" cy="6" rx="8" ry="3" />
+        <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
+        <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+      </svg>
+    ),
+    label: 'VectorAI Search',
+    sublabel: 'Actian VectorAI DB\nlocal semantic query',
+    color: '#52D0A0',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="1.5">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+        <rect x="9" y="3" width="6" height="4" rx="1" />
+        <path d="M9 12h6M9 16h4" strokeLinecap="round" />
+      </svg>
+    ),
+    label: '90K PubMed Articles',
+    sublabel: 'Ranked research\npapers retrieved',
+    color: '#F4A261',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="1.5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    label: 'Clinical Context',
+    sublabel: 'Disease links\nresearch-grounded',
+    color: '#3ECFCF',
+  },
+];
+
+function RAGPipelineVisual() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
+  return (
+    <div ref={ref} className="w-full overflow-x-auto pb-2">
+      <div className="flex items-stretch gap-0 min-w-[640px] relative">
+        {RAG_STEPS.map((step, i) => (
+          <React.Fragment key={step.label}>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-1 flex flex-col items-center gap-3 px-3 py-5 rounded-2xl border bg-[#13161F]/80 backdrop-blur-md text-center relative"
+              style={{ borderColor: `${step.color}25` }}
+            >
+              <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full" style={{ background: step.color }} />
+              <span className="absolute top-3 right-3 text-[10px] font-mono opacity-30 text-[#8A93B2]">0{i + 1}</span>
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${step.color}18`, color: step.color, border: `1px solid ${step.color}30` }}
+              >
+                {step.icon}
+              </div>
+              <div>
+                <div className="font-medium text-[#F0F2F8] text-sm">{step.label}</div>
+                <div className="text-[#8A93B2] text-xs mt-1 leading-relaxed whitespace-pre-line">{step.sublabel}</div>
+              </div>
+            </motion.div>
+
+            {i < RAG_STEPS.length - 1 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={isInView ? { opacity: 1 } : {}}
+                transition={{ delay: i * 0.1 + 0.15, duration: 0.4 }}
+                className="flex items-center px-1 flex-shrink-0"
+              >
+                <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+                  <path
+                    d="M2 10h18M16 4l8 6-8 6"
+                    stroke="url(#ragArrowGrad)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <defs>
+                    <linearGradient id="ragArrowGrad" x1="0" y1="0" x2="28" y2="0" gradientUnits="userSpaceOnUse">
+                      <stop stopColor={RAG_STEPS[i].color} />
+                      <stop offset="1" stopColor={RAG_STEPS[i + 1].color} />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </motion.div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Section Nav Dots (Apple-style right rail) ───────────────────────────────
 const NAV_SECTIONS = [
   { id: 's-hero',      label: 'Overview' },
@@ -241,6 +365,7 @@ const NAV_SECTIONS = [
   { id: 's-dataset',   label: 'Data' },
   { id: 's-model',     label: 'The Model' },
   { id: 's-nlp',       label: 'NLP Evaluation' },
+  { id: 's-rag',       label: 'Research RAG' },
   { id: 's-early',     label: 'Early Detection' },
   { id: 's-impact',    label: 'Impact' },
   { id: 's-explore',   label: 'Exploration' },
@@ -759,6 +884,222 @@ export const Present = () => {
               ))}
             </div>
           </FadeIn>
+        </div>
+      </section>
+
+      <Divider />
+
+      {/* ── 4c. RAG SYSTEM ───────────────────────────────────────────────── */}
+      <section id="s-rag" className="py-32 px-6">
+        <div className="max-w-6xl mx-auto w-full">
+
+          <FadeIn className="text-center mb-8">
+            <SectionLabel>Research Intelligence</SectionLabel>
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
+              90,000 PubMed papers.{' '}
+              <span className="bg-gradient-to-r from-[#52D0A0] to-[#3ECFCF] bg-clip-text text-transparent">
+                Zero data leaves.
+              </span>
+            </h2>
+            <p className="text-[#8A93B2] text-lg max-w-2xl mx-auto">
+              A fully local RAG system built on Actian VectorAI DB — patient symptoms are matched
+              against a curated corpus of autoimmune research without ever touching an external server.
+            </p>
+          </FadeIn>
+
+          {/* Privacy trust bar */}
+          <FadeIn delay={0.06} className="mb-12">
+            <div className="flex flex-wrap justify-center gap-3">
+              {[
+                { icon: (
+                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" stroke="currentColor" strokeWidth="1.6">
+                      <path d="M8 14s6-3 6-7.5V3L8 1 2 3v3.5C2 11 8 14 8 14z" />
+                    </svg>
+                  ), text: 'VectorAI DB — local only', color: '#52D0A0' },
+                { icon: (
+                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" stroke="currentColor" strokeWidth="1.6">
+                      <rect x="3" y="6" width="10" height="8" rx="1.5" />
+                      <path d="M5.5 6V4.5a2.5 2.5 0 015 0V6" strokeLinecap="round" />
+                    </svg>
+                  ), text: 'SentenceTransformers — local embeddings', color: '#3ECFCF' },
+                { icon: (
+                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="8" cy="8" r="6" />
+                      <path d="M8 5v3l2 2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ), text: 'No external API calls', color: '#7B61FF' },
+                { icon: (
+                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" stroke="currentColor" strokeWidth="1.6">
+                      <path d="M2 8h12M2 4h12M2 12h8" strokeLinecap="round" />
+                    </svg>
+                  ), text: 'HIPAA-aligned architecture', color: '#F4A261' },
+              ].map((badge) => (
+                <div
+                  key={badge.text}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur-md"
+                  style={{ borderColor: `${badge.color}35`, background: `${badge.color}0D`, color: badge.color }}
+                >
+                  {badge.icon}
+                  <span className="text-xs font-mono tracking-wide" style={{ color: badge.color }}>{badge.text}</span>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+
+          {/* RAG Pipeline */}
+          <FadeIn delay={0.08} className="mb-14">
+            <RAGPipelineVisual />
+          </FadeIn>
+
+          {/* Privacy + scale callout — two-column */}
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+
+            {/* Left — privacy architecture */}
+            <FadeIn delay={0.1}>
+              <div className="h-full rounded-2xl border border-[#52D0A0]/20 bg-[#52D0A0]/[0.04] backdrop-blur-md overflow-hidden">
+                {/* Header bar */}
+                <div className="px-6 py-4 border-b border-white/5 flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#52D0A0]/15 border border-[#52D0A0]/25">
+                    <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" stroke="#52D0A0" strokeWidth="1.5">
+                      <path d="M8 14s6-3 6-7.5V3L8 1 2 3v3.5C2 11 8 14 8 14z" />
+                      <path d="M5.5 8l2 2L11 6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-mono tracking-widest text-[#52D0A0] uppercase">Privacy Architecture</span>
+                </div>
+
+                <div className="px-6 py-5 space-y-4">
+                  {[
+                    {
+                      component: 'Actian VectorAI DB',
+                      detail: 'Runs entirely on-premise. Patient queries never leave the hospital environment.',
+                      status: 'Local',
+                      color: '#52D0A0',
+                    },
+                    {
+                      component: 'SentenceTransformers (S-PubMedBert-MS-MARCO)',
+                      detail: 'Biomedical embedding model runs locally. 768-dim vectors generated with no cloud dependency.',
+                      status: 'Local',
+                      color: '#3ECFCF',
+                    },
+                    {
+                      component: 'PubMed Corpus',
+                      detail: '90,000+ articles indexed once at setup. All lookups happen against a local snapshot.',
+                      status: 'Static',
+                      color: '#7B61FF',
+                    },
+                  ].map((item, i, arr) => (
+                    <div
+                      key={item.component}
+                      className={`flex items-start gap-4 pb-4 ${i < arr.length - 1 ? 'border-b border-white/5' : ''}`}
+                    >
+                      <div
+                        className="w-2 h-2 rounded-full flex-shrink-0 mt-2"
+                        style={{ background: item.color, boxShadow: `0 0 6px ${item.color}80` }}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-[#F0F2F8]/90">{item.component}</span>
+                          <span
+                            className="text-[9px] font-mono tracking-widest px-2 py-0.5 rounded-full border"
+                            style={{ color: item.color, borderColor: `${item.color}40`, background: `${item.color}12` }}
+                          >
+                            {item.status}
+                          </span>
+                        </div>
+                        <p className="text-[#8A93B2] text-xs leading-relaxed">{item.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FadeIn>
+
+            {/* Right — scale + how it works */}
+            <FadeIn delay={0.14}>
+              <div className="flex flex-col gap-5 h-full">
+                {/* Stat cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { val: '90K+', label: 'PubMed Articles Indexed', color: '#F4A261' },
+                    { val: '100%', label: 'Locally Processed', color: '#52D0A0' },
+                  ].map((s, i) => (
+                    <motion.div
+                      key={s.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.14 + i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex flex-col items-center py-6 px-4 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                      style={{ borderColor: `${s.color}35`, background: `${s.color}0D` }}
+                    >
+                      <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full" style={{ background: s.color }} />
+                      <span className="font-display text-3xl font-semibold tracking-[0.04em] mb-1" style={{ color: s.color }}>{s.val}</span>
+                      <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{s.label}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* How it works callout */}
+                <div className="flex-1 p-5 rounded-2xl border border-[#7B61FF]/20 bg-[#7B61FF]/[0.05] backdrop-blur-md relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-gradient-to-b from-[#3ECFCF] to-[#52D0A0]" />
+                  <p className="text-[10px] font-mono tracking-widest text-[#3ECFCF] uppercase mb-3 pl-2">How It Works</p>
+                  <div className="space-y-3 pl-2">
+                    {[
+                      'Patient enters symptoms in free text',
+                      'SentenceTransformers (S-PubMedBert-MS-MARCO) encodes text into 768-dim vectors locally',
+                      'Actian VectorAI DB performs cosine similarity search',
+                      'Top-ranked PubMed papers surface disease-symptom links',
+                      'Retrieved context grounds the model\'s differential output',
+                    ].map((step, i) => (
+                      <div key={step} className="flex items-start gap-3">
+                        <span className="font-mono text-[10px] text-[#3ECFCF]/50 flex-shrink-0 mt-0.5 w-4">{i + 1}.</span>
+                        <span className="text-[#8A93B2] text-xs leading-snug">{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+
+          {/* Bottom insight cards */}
+          <FadeIn delay={0.2}>
+            <div className="grid sm:grid-cols-3 gap-5">
+              {[
+                {
+                  title: 'Research-grounded, not hallucinated',
+                  desc: 'Every disease connection is backed by a real PubMed citation retrieved at query time — no generative fabrication.',
+                  color: '#52D0A0',
+                  index: '01',
+                },
+                {
+                  title: 'Air-gapped by design',
+                  desc: 'VectorAI DB and vLLM both run locally. No symptom data, embeddings, or results ever transit to a third-party service.',
+                  color: '#3ECFCF',
+                  index: '02',
+                },
+                {
+                  title: 'Autoimmune-specialized corpus',
+                  desc: '90,000+ articles curated from PubMed specifically around autoimmune pathology, lab markers, and clinical presentations.',
+                  color: '#7B61FF',
+                  index: '03',
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="p-5 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                  style={{ borderColor: `${item.color}25`, background: `${item.color}08` }}
+                >
+                  <div className="absolute top-0 left-5 right-5 h-[2px] rounded-full" style={{ background: item.color }} />
+                  <span className="font-mono text-[10px] text-[#8A93B2]/40 tracking-widest absolute top-4 right-4">{item.index}</span>
+                  <div className="font-medium text-sm mb-2 mt-3" style={{ color: item.color }}>{item.title}</div>
+                  <div className="text-[#8A93B2] text-xs leading-relaxed">{item.desc}</div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+
         </div>
       </section>
 
