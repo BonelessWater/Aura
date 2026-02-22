@@ -112,7 +112,7 @@ class CategoryClassifier:
         due to per-split missingness thresholds.
         """
         X_aligned = X.reindex(columns=self.feature_names)
-        return X_aligned.fillna(X_aligned.median())
+        return X_aligned.fillna(X_aligned.median(numeric_only=True))
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Predict category labels."""

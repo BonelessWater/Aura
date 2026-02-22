@@ -47,7 +47,7 @@ class DiseaseClassifier:
     def _align(self, X: pd.DataFrame) -> pd.DataFrame:
         """Reindex X to self.feature_names, filling absent columns with median."""
         X_aligned = X.reindex(columns=self.feature_names)
-        return X_aligned.fillna(X_aligned.median())
+        return X_aligned.fillna(X_aligned.median(numeric_only=True))
 
     def fit(self, X: pd.DataFrame, y: pd.Series, **kwargs):
         """Train on cluster-specific data."""

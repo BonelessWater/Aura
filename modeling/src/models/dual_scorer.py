@@ -148,11 +148,15 @@ class DualScorer:
         category_probs = self.category_classifier.predict_proba(X)
         categories, confidences = self.category_classifier.get_category_confidence(X)
 
+        # LabelEncoder sorts classes alphabetically — use its order to map
+        # probability columns to the correct category names.
+        clf_classes = list(self.category_classifier.label_encoder.classes_)
+
         results = []
         for i in range(len(X)):
             prob_dict = {
-                cat: float(category_probs[i, j])
-                for j, cat in enumerate(self.categories)
+                clf_classes[j]: float(category_probs[i, j])
+                for j in range(len(clf_classes))
             }
 
             result = DualScoreResult(

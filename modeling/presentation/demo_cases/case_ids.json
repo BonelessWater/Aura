@@ -1,6 +1,19 @@
 {
-  "case_1_systemic": "harvard_08670",
-  "case_2_gi": "nhanes_90119",
-  "case_3_nuanced": "nhanes_73741",
-  "case_4_healthy": "nhanes_79163"
+  "case_01_healthy_young_m":        "nhanes_80310",
+  "case_02_healthy_middle_m":       "nhanes_79611",
+  "case_03_healthy_older_m":        "nhanes_97744",
+  "case_04_healthy_young_f":        "nhanes_80111",
+  "case_05_healthy_middle_f":       "nhanes_75075",
+  "case_06_healthy_older_f":        "nhanes_70805",
+  "case_07_systemic_scleroderma":   "immport_sdy3216_420551",
+  "case_08_systemic_gpa":           "immport_sdy91_114872",
+  "case_09_systemic_reactive_arth": "harvard_03190",
+  "case_10_systemic_ra":            "harvard_00227",
+  "case_11_systemic_as":            "harvard_03583",
+  "case_12_systemic_psa":           "harvard_11064",
+  "case_13_systemic_sjogren":       "immport_sdy823_169220",
+  "case_14_systemic_sle":           "immport_sdy625_156485",
+  "case_15_endocrine_t1d_f":        "immport_sdy569_151315",
+  "case_16_endocrine_t1d_m":        "immport_sdy569_151313",
+  "case_17_endocrine_thyroiditis":  "nhanes_92269"
 }
