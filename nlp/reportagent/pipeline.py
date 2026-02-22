@@ -127,18 +127,112 @@ async def generate_report(person_id: str) -> MedicalResearchReport:
 
     report = result.output
 
+    # Phase 6: Hardening -- enrich QualityMetrics
+    report = _apply_hardening(report, result, bundle, quality, deps, person_id)
+
+    # Phase 7: Delta storage (best-effort)
+    _store_to_delta(report, get_client(), person_id)
+
     ThoughtStream.emit(
         agent="Report Agent", step="complete",
         summary=(
             f"Report generated: "
             f"{len(report.highlighted_lab_panels)} highlighted panels, "
             f"{len(report.bibliography)} citations, "
-            f"quality={quality['tier']}"
+            f"quality={quality['tier']}, "
+            f"faithfulness={report.quality_metrics.faithfulness_score:.2f}"
         ),
         patient_id=person_id,
     )
 
     return report
+
+
+def _apply_hardening(report, result, bundle, quality, deps, person_id):
+    """
+    Post-generation quality enrichment.
+
+    1. Faithfulness check (reuse nlp/translator/faithfulness_checker.py)
+    2. FK grade level on executive summary
+    3. Token tracking from PydanticAI result.usage()
+    4. Passage count reconciliation
+    """
+    # -- Faithfulness check --
+    try:
+        from nlp.translator.faithfulness_checker import check_faithfulness
+
+        passages = bundle.research_result.passages if bundle.research_result else []
+        text_to_check = (
+            report.executive_summary
+            + " " + report.key_findings.content
+            + " " + report.bio_fingerprint_summary
+        )
+        _passed, _flagged, mean_score = check_faithfulness(text_to_check, passages)
+        report.quality_metrics.faithfulness_score = mean_score
+        logger.info(
+            "Faithfulness check for %s: score=%.3f passed=%s flagged=%d",
+            person_id, mean_score, _passed, len(_flagged),
+        )
+    except Exception as e:
+        logger.warning("Faithfulness check failed for %s: %s", person_id, e)
+
+    # -- FK grade level on executive summary --
+    try:
+        import textstat
+        fk = textstat.flesch_kincaid_grade(report.executive_summary)
+        report.quality_metrics.fk_grade_level = round(fk, 1)
+        logger.info("FK grade level for %s: %.1f", person_id, fk)
+    except ImportError:
+        logger.warning("textstat not installed, skipping FK grade level check")
+    except Exception as e:
+        logger.warning("FK grade level check failed for %s: %s", person_id, e)
+
+    # -- Token tracking from PydanticAI --
+    try:
+        usage = result.usage()
+        total_tokens = (usage.request_tokens or 0) + (usage.response_tokens or 0)
+        report.quality_metrics.total_tokens = total_tokens
+        logger.info("Token usage for %s: %d total", person_id, total_tokens)
+    except Exception as e:
+        logger.warning("Token tracking failed for %s: %s", person_id, e)
+
+    # -- Tool call count --
+    report.quality_metrics.tool_calls_used = deps.tool_call_count
+
+    # -- Passage counts --
+    passages = bundle.research_result.passages if bundle.research_result else []
+    report.quality_metrics.passages_retrieved = len(passages)
+    report.quality_metrics.retrieval_confidence = quality["confidence"]
+
+    # Count unique DOIs cited in bibliography
+    cited_dois = {c.doi for c in report.bibliography if c.doi}
+    report.quality_metrics.passages_cited = len(cited_dois)
+
+    # -- Generated timestamp --
+    report.generated_at = datetime.now(timezone.utc).isoformat()
+
+    return report
+
+
+def _store_to_delta(report, db, person_id):
+    """
+    Store report to aura.reports.generated Delta table for audit trail.
+    Best-effort -- failures are logged but do not block report return.
+    """
+    try:
+        import json
+        report_json = json.dumps(report.model_dump(mode="json"))
+        sql = (
+            "INSERT INTO aura.reports.generated "
+            "(patient_id, generated_at, report_json) "
+            f"VALUES ('{person_id}', '{report.generated_at}', '{report_json}')"
+        )
+        db.run_sql(sql, desc=f"store report for {person_id}")
+        logger.info("Report stored in Delta for %s", person_id)
+    except Exception as e:
+        logger.warning(
+            "Failed to store report in Delta for %s: %s", person_id, e
+        )
 
 
 def _build_agent_prompt(bundle: PatientBundle, quality: dict) -> str:
