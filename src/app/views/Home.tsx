@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Hero } from '../components/home/Hero';
 import { IntakeWizard } from '../components/intake/IntakeWizard';
 import { Processing } from '../components/processing/Processing';
 import { ResultsDashboard } from '../components/results/ResultsDashboard';
 import { SOAPNote } from '../components/results/SOAPNote';
 import { SpecialistMap } from '../components/specialist/SpecialistMap';
-import { Community } from '../components/community/Community';
 import { BodyModel } from '../components/results/BodyModel';
 import { useBackgroundTitle } from '../context/BackgroundContext';
 
@@ -18,6 +17,7 @@ export const Home = () => {
   const [view, setView] = useState<'hero' | 'intake' | 'processing' | 'results'>(
     showDashboard ? 'results' : startIntake ? 'intake' : 'hero'
   );
+  const navigate = useNavigate();
   const { setShowTitle } = useBackgroundTitle();
 
   useEffect(() => {
@@ -25,8 +25,13 @@ export const Home = () => {
   }, [view, setShowTitle]);
   const [showSOAP, setShowSOAP] = useState(false);
   const [showSpecialists, setShowSpecialists] = useState(false);
-  const [showCommunity, setShowCommunity] = useState(false);
   const [showBody, setShowBody] = useState(false);
+  const [showForumECG, setShowForumECG] = useState(false);
+
+  const handleViewCommunity = () => {
+    setShowForumECG(true);
+    setTimeout(() => navigate('/forum'), 900);
+  };
 
   const handleStart = () => setView('intake');
   const handleIntakeComplete = () => setView('processing');
@@ -79,7 +84,7 @@ export const Home = () => {
             <ResultsDashboard
               onViewSOAP={() => setShowSOAP(true)}
               onViewSpecialists={() => setShowSpecialists(true)}
-              onViewCommunity={() => setShowCommunity(true)}
+              onViewCommunity={handleViewCommunity}
               onViewBody={() => setShowBody(true)}
             />
           </motion.div>
@@ -155,9 +160,8 @@ export const Home = () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showCommunity && (
+        {showForumECG && (
           <>
-            {/* Dark backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -165,8 +169,6 @@ export const Home = () => {
               transition={{ duration: 0.3 }}
               className="fixed inset-0 z-[79] bg-[#0A0D14]/90"
             />
-
-            {/* ECG pulse line sweep */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -177,32 +179,21 @@ export const Home = () => {
               <svg viewBox="0 0 1200 120" className="w-full h-24 absolute top-1/2 -translate-y-1/2" preserveAspectRatio="none">
                 <motion.path
                   d="M0,60 L300,60 L340,60 L360,20 L380,100 L400,10 L420,90 L440,60 L480,60 L1200,60"
-                  fill="none" stroke="#D4424A" strokeWidth="2"
+                  fill="none" stroke="#3ECFCF" strokeWidth="2"
                   initial={{ pathLength: 0, opacity: 0 }}
                   animate={{ pathLength: 1, opacity: [0, 1, 1, 0] }}
                   transition={{ duration: 0.8, ease: "easeInOut", opacity: { times: [0, 0.1, 0.7, 1], duration: 0.8 } }}
-                  style={{ filter: 'drop-shadow(0 0 8px rgba(212, 66, 74, 0.8)) drop-shadow(0 0 20px rgba(212, 66, 74, 0.4))' }}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(62,207,207,0.8)) drop-shadow(0 0 20px rgba(62,207,207,0.4))' }}
                 />
                 <motion.path
                   d="M0,60 L300,60 L340,60 L360,20 L380,100 L400,10 L420,90 L440,60 L480,60 L1200,60"
-                  fill="none" stroke="#D4424A" strokeWidth="6"
+                  fill="none" stroke="#3ECFCF" strokeWidth="6"
                   initial={{ pathLength: 0, opacity: 0 }}
                   animate={{ pathLength: 1, opacity: [0, 0.3, 0.3, 0] }}
                   transition={{ duration: 0.8, ease: "easeInOut", opacity: { times: [0, 0.1, 0.7, 1], duration: 0.8 } }}
                   style={{ filter: 'blur(4px)' }}
                 />
               </svg>
-            </motion.div>
-
-            {/* Forums content — reveals after pulse */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.96, filter: 'blur(8px)' }}
-              transition={{ duration: 0.5, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed inset-0 z-[80]"
-            >
-              <Community onClose={() => setShowCommunity(false)} />
             </motion.div>
           </>
         )}

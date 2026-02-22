@@ -7,6 +7,7 @@ import { Vault } from "./views/Vault";
 import { ClinicianPortal } from "./views/ClinicianPortal";
 import { BodyModel } from "./components/results/BodyModel";
 import { Present } from "./views/Present";
+import { Forum } from "./views/Forum";
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
       {
         path: "present",
         Component: Present,
+      },
+      {
+        path: "forum",
+        Component: Forum,
       },
     ],
   },

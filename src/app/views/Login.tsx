@@ -133,7 +133,13 @@ export const Login = () => {
 
           <button
             type="button"
-            onClick={() => setIsSignup(!isSignup)}
+            onClick={() => {
+              if (isSignup) {
+                setIsSignup(false);
+              } else {
+                navigate('/', { state: { startIntake: true } });
+              }
+            }}
             className="w-full text-center text-sm text-white/40 hover:text-white/70 transition-colors py-1"
           >
             {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}

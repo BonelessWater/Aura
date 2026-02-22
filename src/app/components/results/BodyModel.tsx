@@ -635,28 +635,18 @@ export const BodyModel = ({
                 animate={{ opacity: 1 }}
                 className="p-6 flex flex-col items-center justify-center h-full text-center"
               >
-                <div className="w-16 h-16 rounded-full bg-[#7B61FF]/10 flex items-center justify-center mb-4">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-7 h-7 text-[#7B61FF]"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <circle cx="12" cy="4.5" r="2.5" />
-                    <path d="M12 7v6M12 13l-3 7M12 13l3 7M8 11h8" />
-                  </svg>
+                <div className="relative flex flex-col items-center mb-1">
+                  <p className="text-sm text-[#F0F2F8] font-medium relative z-0">
+                    Tap a highlighted area
+                  </p>
                 </div>
-                <p className="text-sm text-[#F0F2F8] font-medium mb-1">
-                  Tap a highlighted area
-                </p>
                 <p className="text-xs text-[#8A93B2] max-w-[240px]">
                   Each glowing spot represents something we found in your
                   data. Tap one to learn what it means.
                 </p>
 
                 {/* Quick summary list of all regions */}
-                <div className="mt-6 space-y-2 w-full text-left">
+                <div className="mt-6 space-y-2 w-full text-left relative">
                   {regions
                     .filter(
                       (r, i, arr) =>
