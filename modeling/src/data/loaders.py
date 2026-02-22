@@ -235,7 +235,26 @@ def get_feature_columns() -> Dict[str, List[str]]:
             "ana_status", "anti_dsdna", "hla_b27",
             "anti_sm", "anti_ro", "anti_la",
             "rf_status", "anti_ccp", "c3", "c4"
-        ]
+        ],
+        # Derived features from feature_engineering.engineer_all_features()
+        "engineered": [
+            # Inflammatory ratios
+            "crp_esr_ratio", "inflammatory_burden", "high_inflammation",
+            # Anemia indicators
+            "anemia_flag", "microcytic_flag", "macrocytic_flag",
+            # CBC ratios
+            "nlr", "high_nlr", "rdw_elevated", "plr",
+            # Lab abnormality counts
+            "lab_abnormality_count", "high_value_count", "low_value_count",
+            # GI-specific
+            "calprotectin_elevated", "calprotectin_high", "log_calprotectin",
+            # Autoantibody scores (when panel is joined)
+            "autoantibody_count", "lupus_panel_score", "ra_panel_score",
+            "complement_consumption", "c3_c4_ratio",
+        ],
+        "gi": [
+            "fecal_calprotectin",
+        ],
     }
 
 

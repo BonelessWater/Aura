@@ -1,78 +1,252 @@
-# Aura: Medical Symptom Analysis Platform
+# Aura — AI-Powered Autoimmune Triage
 
-Aura is a privacy-first, local multi-agent RAG platform designed to analyze complex medical histories and bridge the communication gap between patients and specialists.
+> *"Your symptoms have a pattern. We find it."*
 
-## Global Design Language & UX Flow
-
-**Color Palette:**
-- Background: `#0A0D14` (Deep space navy)
-- Primary Accent: `#7B61FF` (Soft violet - trust, intelligence)
-- Secondary Accent: `#3ECFCF` (Clinical teal - precision)
-- Highlight/CTA: `#F4A261` (Warm amber - urgency without alarm)
-- Text: `#F0F2F8` (Off-white) / `#8A93B2` (Muted slate)
-- Error: `#E07070` (Muted rose) / Success: `#52D0A0` (Soft mint)
-
-**Typography & Spacing:**
-- Headings: `Clash Display` (64/40/28px, +0.02em tracking).
-- Body: `Inter` (16/14/12px, 1.6 line-height).
-- Data/Scores: `JetBrains Mono`.
-- Spacing: 8px base unit. Cards use 24px padding, 16px radius, 1px border `rgba(123,97,255,0.15)`. Max width 1120px.
-
-**Persistent Background Animation:**
-A three-layer system that breathes life into the interface without distracting:
-1. **Aurora Mesh:** A slow, 60-second drifting gradient (`#0A0D14`, `#1A1240`, `#0D2A2A`). Shifts hue toward teal on scroll.
-2. **Particle Field:** 180 tiny particles (1.5px, 25% opacity) in Brownian motion. Proximity lines connect at 140px.
-3. **Radial Depth Glow:** A 900px soft violet glow (7% opacity) tracks the mouse with a 600ms cubic-bezier delay.
+Aura is a privacy-first, local AI platform that analyzes a patient's lab results and symptom history, identifies likely autoimmune disease patterns, and produces a structured clinical report the patient can hand directly to their doctor — cutting years off the diagnostic odyssey.
 
 ---
 
-## 1. The Landing Experience
+## The Problem
 
-**Layout:** Full-viewport, two-column split (60% copy / 40% graphic).
-- **Left (Copy):** A teal monospace tag reads "PRIVATE. LOCAL. CITED." with a blinking cursor. The H1 ("Your symptoms have a pattern. We find it.") animates word-by-word with a 12px upward fade (80ms stagger). The CTA button `[Upload My Labs]` features a hover state that blooms a violet shadow and nudges the arrow right.
-- **Right (Graphic):** A 3D isometric SVG of a human silhouette with a pulsing amber chest glow. Three elements (a PDF card, a hexagonal agent cluster, a SOAP note) orbit slowly on a 20-second loop.
+Autoimmune diseases are among the most misdiagnosed and delayed-diagnosed conditions in modern medicine.
 
----
+- **50+ million Americans** live with an autoimmune disease
+- The average patient waits **3–5 years** before receiving a correct diagnosis
+- They visit an average of **4–6 different doctors** before anyone connects the dots
+- During that window they are often told their symptoms are stress, anxiety, or "just getting older"
+- Misdiagnosis leads to wrong treatments — sometimes ones that actively worsen autoimmune conditions
 
-## 2. Patient Intake (3-Step Wizard)
+The diagnostic delay is not a failure of medicine. It is a failure of **information flow**. Each specialist sees a slice. No one sees the whole pattern.
 
-A full-screen flow with a top progress rail. The connecting line fills with a gradient sweep on advance.
-
-- **Step 1: Longitudinal Labs:** A 480x280px dashed drop zone. On drag-over, the border turns solid violet and the zone scales to 1.02. Uploaded PDFs appear as horizontal cards with a spring-animated checkmark and a sweeping green parse bar.
-- **Step 2: Clinical Interview:** A large textarea. The placeholder text cycles through five guided prompts via a 3-second typewriter crossfade. Below, five tap-chips (e.g., "Fatigue", "Joint Pain") allow quick selection, filling with a violet tint and animating a checkmark on click.
-- **Step 3: Visual Evidence:** Two upload tiles (Photos/Videos). A soft amber callout slides up after 600ms explaining the Vision Model's role.
+Aura fixes that.
 
 ---
 
-## 3. The Engine: Multi-Agent Processing
+## What Aura Does
 
-A dark overlay with a centered card. Four rows animate in sequentially, locking to a teal checkmark before the next begins:
-1. **Agent 1 (Extractor & Vision):** Parses PDFs to JSON and translates images to clinical keywords. (Sweeping teal bar).
-2. **Agent 2 (RAG Engine):** Queries a local vector database of PubMed journals. (Pulsing search icon).
-3. **Agent 3 (Dual-Scorer):** Calculates Category Confidence (broad trends) and Pattern Similarity (specific flags). (Circular arcs building).
-4. **Agent 4 (Translator):** Drafts outputs with DOI citations. (Looping pen animation).
+Aura takes everything a patient already has — their blood panels, uploaded lab PDFs, symptom descriptions, and medical photos — and runs it through a hierarchical AI pipeline that:
 
----
+1. **Identifies which disease cluster** the patient's labs and symptoms point toward (systemic autoimmune, gastrointestinal, endocrine, or healthy)
+2. **Narrows to a specific likely condition** within that cluster (e.g., Lupus vs. Rheumatoid Arthritis vs. Sjögren's)
+3. **Generates a confidence score** for each finding, calibrated against 88,000+ real patient records
+4. **Produces two outputs** — a plain-English summary the patient can understand, and a structured clinical SOAP note the doctor can act on immediately
 
-## 4. Results Dashboard: Bridging the Gap
-
-A two-column layout: 300px left sidebar navigation, right main content area.
-
-**The Layman's Compass (Patient View):**
-- **Score Cards:** Two SVG arc gauges animate from 0 to their value over 1.2s. The primary "Category Confidence" is large and bold. The secondary "Pattern Similarity" is visually muted with a permanent disclaimer: "This is a pattern match, not a diagnosis."
-- **Translation Panel:** Plain-English explanations. Medical terms have dotted amber underlines; hovering triggers a 150ms slide-up tooltip with definitions.
-- **Next Step Script:** A teal callout card providing a verbatim script for the doctor. A `[Copy Script]` button morphs to "Copied" with a scale pulse.
-
-**The Clinical SOAP Note (Doctor View):**
-- Transitions via a slide-in from the right.
-- Rendered on a pure white card with black text (the only light-mode element) to signal a clinical document.
-- Includes Objective Data, Assessment (Dual-Score), Literature Grounding (clickable DOI links), and Plan.
+Aura does not diagnose. It triages, patterns, and translates — giving patients the vocabulary and evidence to have a productive first conversation with the right specialist, instead of showing up with a folder of disconnected lab printouts.
 
 ---
 
-## 5. Ecosystem: Action & Support
+## Who It Helps
 
-- **Geographic Specialist Routing:** A dark-themed map (55% width) alongside scrollable specialist cards (45%). Hovering a card pulses the corresponding map pin and draws a glowing arc from the user's location.
-- **Clustered Support Forums:** Users are matched to category-based communities. The feed uses abstract generative avatars. A pinned teal banner calmly states moderation rules. A floating `[+]` button expands to `[Share Your Experience]` on hover.
+### Patients
+- Walk into appointments with a structured, evidence-backed report rather than anecdotal descriptions
+- Know which type of specialist to ask for a referral to
+- Understand what their own lab values mean relative to healthy baselines and disease patterns
+- End the loop of being dismissed — the report speaks the language of medicine
 
-*Micro-interactions: Use skeleton screens with a slow shimmer for loading. Ensure graceful error states with actionable copy. Maintain smooth scrolling and distinct focus states for accessibility.*
+### Primary Care Physicians
+- Receive a pre-processed clinical summary that flags autoimmune patterns before the consultation
+- Reduce time spent interpreting scattered prior records
+- Make smarter referral decisions on the first visit rather than the third
+
+### Specialists
+- Patients arrive with the right referral and relevant prior workup already organized
+- First appointment can focus on confirmation and treatment planning, not intake from scratch
+
+### Insurance Companies
+- Fewer redundant specialist visits and unnecessary diagnostic panels
+- Earlier correct diagnosis means treatment starts sooner — reducing long-term claims from disease progression
+- One structured AI triage visit replaces 3–4 exploratory specialist visits
+
+### Health Systems & Clinics
+- Reduces unnecessary referral chains that clog specialist schedules
+- Shortens the average time from first symptom to treatment plan
+- Captures clinical value from lab data that would otherwise be siloed
+
+---
+
+## The Economic Case
+
+### Per Patient
+
+| Scenario | Without Aura | With Aura | Saved |
+|---|---|---|---|
+| Specialist visits to diagnosis | 4–6 visits | 2–3 visits | 2–3 visits |
+| Cost per specialist visit | ~$350–$700 | — | — |
+| Direct visit savings | — | — | **$700–$2,100 per patient** |
+| Diagnostic odyssey duration | 3–5 years | Months | Years of quality life |
+| Mismanagement costs (wrong Rx, ER) | $5,000–$20,000 | Reduced significantly | **Est. $3,000–$15,000 per patient** |
+
+### At Scale
+
+| Stakeholder | Annual Opportunity |
+|---|---|
+| **Patients** | $700–$2,100 in direct visit savings; years earlier treatment |
+| **Insurance companies** | ~$3,000–$15,000 per claim in avoided redundant care |
+| **US health system** | 50M patients × even 1 visit saved = **$17.5B–$35B annually** |
+| **Clinics** | 15–30 min saved per consultation × volume = significant physician capacity freed |
+
+These are conservative estimates. The compounding benefit of catching autoimmune disease 2–3 years earlier — before organ damage, disability, or treatment-resistant progression — dwarfs the direct visit savings.
+
+---
+
+## How Much Time Aura Saves
+
+Our visit simulation (notebook `07_visit_simulation.ipynb`) models patient journeys across progressive clinical information — simulating what the model knows after each visit.
+
+Key findings from 88,742 patient records:
+- The model reaches **>80% confidence** at visit 2 for most patients
+- Average **1.8 visits saved** before a confident triage decision
+- For systemic autoimmune diseases (Lupus, RA, Sjögren's), confident pattern detection occurs ~2 visits earlier than traditional diagnostic timelines
+- At $700/visit, the average patient saves **$1,260 in direct costs**
+
+For the average patient spending 3–5 years in the diagnostic odyssey, Aura compresses this to months — not by replacing doctors, but by ensuring every appointment counts.
+
+---
+
+## The Pipeline
+
+```
+Patient Input
+    │
+    ├── Lab PDFs / Blood panels
+    ├── Symptom descriptions (free text)
+    └── Medical photos (optional)
+         │
+         ▼
+┌─────────────────────────────┐
+│  Agent 1: Extractor         │  Parses PDFs → structured JSON
+│  + Vision Model             │  Translates images → clinical keywords
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│  Agent 2: RAG Engine        │  Queries local PubMed vector database
+│                             │  Grounds findings in peer-reviewed literature
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────────────────┐
+│  Agent 3: Hierarchical Dual-Scorer                  │
+│                                                     │
+│  Stage 1 — Category Classifier (XGBoost)            │
+│    Trained on 88,742 patients                       │
+│    Output: probability over 4 clusters              │
+│      → Healthy / Systemic / GI / Endocrine          │
+│    Test AUC: ~0.90                                  │
+│                                                     │
+│  Stage 2 — Disease Classifier (per cluster)         │
+│    Systemic:      SLE, RA, Sjögren's, PsA, AS       │
+│    GI:            IBD, Celiac, Functional GI        │
+│    Endocrine:     Hashimoto's, Graves', T1D         │
+│    Output: specific disease + confidence score      │
+│    Systemic AUC: >0.92                              │
+└──────────────┬──────────────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│  Agent 4: Translator        │  Drafts plain-English patient summary
+│                             │  Drafts clinical SOAP note with DOI citations
+└──────────────┬──────────────┘
+               │
+         ┌─────┴─────┐
+         ▼           ▼
+   Patient View   Doctor View
+   Plain English  Clinical SOAP Note
+   + Next Steps   + Literature Grounding
+                  + Referral Recommendation
+```
+
+### Data Foundation
+
+The model is trained on a curated, three-tier dataset architecture:
+
+| Tier | Contents | Size |
+|---|---|---|
+| **Tier 1** — Core Matrix | CBC, inflammatory markers, demographics, diagnoses | 88,742 patients |
+| **Tier 2** — Enrichment | Autoantibody panels, longitudinal labs (MIMIC-IV), GWAS hits (FinnGen R12) | 12,085 + 19,646 + 67,869 records |
+| **Tier 3** — Reference | Age/sex-stratified healthy baselines, ICD-10 cluster map, drug risk index | 110 + 111 + 597 records |
+
+### Feature Engineering
+
+Raw lab values are transformed into clinically meaningful signals:
+- **Z-scores** against age/sex-matched healthy baselines (not population averages)
+- **Inflammatory ratios** — CRP/ESR ratio, neutrophil-lymphocyte ratio (NLR), platelet-lymphocyte ratio (PLR)
+- **Anemia pattern flags** — microcytic, macrocytic, normocytic
+- **Autoantibody composite scores** — lupus panel, RA panel, complement consumption
+- **Missingness flags** — which labs are absent is itself a clinical signal
+
+### Model Comparison (Test Set)
+
+| Model | AUC | Class Imbalance Handling |
+|---|---|---|
+| Logistic Regression | ~0.87 | `balanced` |
+| XGBoost | ~0.90 | None (powers Dual-Scorer) |
+| LightGBM | see output | `balanced` |
+| Random Forest | see output | `balanced_subsample` |
+| CatBoost | see output | `auto_class_weights` |
+
+---
+
+## Privacy & Design Philosophy
+
+Aura is built **local-first**. No patient data leaves the device. The vector database, model inference, and report generation all run on the user's machine. This is non-negotiable for medical AI.
+
+The UI is designed to communicate appropriate uncertainty:
+- Confidence scores are always shown — never hidden
+- A permanent disclaimer distinguishes pattern matching from clinical diagnosis
+- Medical terms surface plain-English tooltips on hover
+- The SOAP note output is clearly framed as AI-assisted, not AI-decided
+
+---
+
+## Repository Structure
+
+```
+aura/
+├── modeling/                  # ML pipeline (see modeling/README.md)
+│   ├── notebooks/             # Jupyter notebooks (numbered narrative arc)
+│   ├── src/                   # Production Python modules
+│   │   ├── data/              # Loaders, preprocessing, feature engineering
+│   │   └── models/            # CategoryClassifier, DiseaseClassifier, DualScorer
+│   ├── data/processed/        # Tiered parquet datasets
+│   └── outputs/               # Figures, trained models
+├── scripts/                   # Data fetch utilities
+├── dataspec.md                # Full dataset specifications
+└── requirements.txt
+```
+
+---
+
+## Getting Started
+
+```bash
+# Clone and install
+git clone https://github.com/your-org/aura
+pip install -r requirements.txt
+
+# Run the modeling pipeline (in order)
+jupyter lab modeling/notebooks/
+
+# Notebooks:
+# 01_data_exploration     — understand the patient population
+# 02_feature_engineering  — build clinically meaningful features
+# 03_baseline_models      — logistic regression baseline
+# 04_advanced_models      — XGBoost, LightGBM, Random Forest, CatBoost shootout
+# 05_explainability       — SHAP values, feature attribution
+# 06_bias_audit           — fairness across age, sex, demographics
+# 07_visit_simulation     — confidence over time, cost savings analysis
+```
+
+---
+
+## Design Language
+
+**Colors:** `#0A0D14` background · `#7B61FF` violet (trust) · `#3ECFCF` teal (precision) · `#F4A261` amber (urgency)
+
+**Typography:** `Clash Display` headings · `Inter` body · `JetBrains Mono` scores
+
+**Animation:** Three-layer background — aurora mesh gradient, Brownian particle field, mouse-tracking radial glow
+
+---
+
+*Aura does not replace physicians. It gives patients the tools to be heard, and gives doctors the signal to act on.*
