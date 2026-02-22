@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Helper for Clinical Translation hover only
-export const DoctorHoverHelper = ({ boxRef }: { boxRef: React.RefObject<HTMLDivElement> }) => {
+export const DoctorHoverHelper = ({ boxRef }: { boxRef: React.RefObject<HTMLDivElement | null> }) => {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    if (!boxRef || !boxRef.current) return;
     const box = boxRef.current;
-    if (!box) return;
     // Only trigger on hover of text inside the box
     const onEnter = (e: Event) => {
       const target = e.target as HTMLElement;

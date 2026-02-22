@@ -21,78 +21,23 @@ FIXTURE_PATH = os.path.join(
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-VALID_PAIN_LEVELS = {"mild", "moderate", "severe"}
+import sys
 
-SYSTEM_PROMPT = (
-    "You extract body-part and pain-level information from medical case reports. "
-    "For each mention of pain, discomfort, ache, tenderness, or soreness in the text, identify:\n"
-    "1. body_part: the anatomical location (e.g. \"right knee\", \"lower back\", \"abdomen\")\n"
-    "2. pain_level: classify as \"mild\", \"moderate\", or \"severe\"\n\n"
-    "Classification guidance for pain_level:\n"
-    "- \"mild\": described as mild, slight, minor, intermittent without distress, "
-    "or managed with OTC medication\n"
-    "- \"moderate\": described as moderate, persistent, recurrent, requiring prescription "
-    "medication, or causing functional limitation\n"
-    "- \"severe\": described as severe, intense, acute, excruciating, debilitating, "
-    "or requiring emergency intervention\n\n"
-    "If no pain, discomfort, ache, tenderness, or soreness is mentioned, return an empty JSON array.\n"
-    "Reply with ONLY a JSON array. No other text.\n\n"
-    "Example output:\n"
-    '[{"body_part": "right knee", "pain_level": "moderate"}, '
-    '{"body_part": "lower back", "pain_level": "severe"}]\n'
-    "If no pain: []"
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from notebooks.extract_body_pain import (
+    SYSTEM_PROMPT,
+    VALID_BODY_REGIONS,
+    VALID_PAIN_LEVELS,
+    normalize_body_region,
+    parse_body_pain_response,
 )
 
 
-# ---------------------------------------------------------------------------
-# Replicate helper functions from the notebook
-# ---------------------------------------------------------------------------
-
-def parse_body_pain_response(response_text):
-    """Parse LLM response into list of body-part/pain-level dicts."""
-    text = response_text.strip()
-
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text[:-3].strip()
-
-    if text.lower() in ("none", "n/a", "null", "", "[]"):
-        return []
-
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError:
-        logger.warning("Failed to parse JSON from LLM response: %s", text[:200])
-        return []
-
-    if isinstance(data, dict):
-        for key in ("extractions", "results", "pain_data", "data"):
-            if key in data and isinstance(data[key], list):
-                data = data[key]
-                break
-        else:
-            logger.warning("LLM returned JSON object without known list key: %s", text[:200])
-            return []
-
-    if not isinstance(data, list):
-        logger.warning("LLM response is not a JSON array: %s", text[:200])
-        return []
-
-    validated = []
-    for item in data:
-        if not isinstance(item, dict):
-            continue
-        bp = item.get("body_part", "").strip()
-        pl = item.get("pain_level", "").strip().lower()
-        if bp and pl in VALID_PAIN_LEVELS:
-            validated.append({"body_part": bp, "pain_level": pl})
-
-    return validated
-
+# Use the parse and normalize functions from the notebook module directly.
+# extract_body_pain_row wrapper for tests that takes a client arg:
 
 def extract_body_pain_row(client, patient_summary):
-    """Call Azure OpenAI to extract body-part/pain-level pairs from one summary."""
+    """Call Azure OpenAI to extract body-region/pain-level pairs from one summary."""
     if not patient_summary or pd.isna(patient_summary):
         return []
 
@@ -158,16 +103,16 @@ def no_pain_rows(pmc_df):
 class TestParseBodyPainResponse:
 
     def test_valid_json_array(self):
-        raw = '[{"body_part": "left knee", "pain_level": "moderate"}]'
+        raw = '[{"body_region": "left_knee", "pain_level": "moderate"}]'
         result = parse_body_pain_response(raw)
         assert len(result) == 1
-        assert result[0]["body_part"] == "left knee"
+        assert result[0]["body_region"] == "left_knee"
         assert result[0]["pain_level"] == "moderate"
 
     def test_multiple_extractions(self):
         raw = json.dumps([
-            {"body_part": "right knee", "pain_level": "severe"},
-            {"body_part": "lower back", "pain_level": "mild"},
+            {"body_region": "right_knee", "pain_level": "severe"},
+            {"body_region": "lower_back", "pain_level": "mild"},
         ])
         result = parse_body_pain_response(raw)
         assert len(result) == 2
@@ -188,26 +133,26 @@ class TestParseBodyPainResponse:
         assert parse_body_pain_response("not json at all") == []
 
     def test_invalid_pain_level_dropped(self):
-        raw = '[{"body_part": "knee", "pain_level": "extreme"}]'
+        raw = '[{"body_region": "left_knee", "pain_level": "extreme"}]'
         result = parse_body_pain_response(raw)
         assert len(result) == 0
 
     def test_empty_body_part_dropped(self):
-        raw = '[{"body_part": "", "pain_level": "mild"}]'
+        raw = '[{"body_region": "", "pain_level": "mild"}]'
         result = parse_body_pain_response(raw)
         assert len(result) == 0
 
     def test_markdown_code_fence_stripped(self):
-        raw = '```json\n[{"body_part": "chest", "pain_level": "severe"}]\n```'
+        raw = '```json\n[{"body_region": "chest", "pain_level": "severe"}]\n```'
         result = parse_body_pain_response(raw)
         assert len(result) == 1
-        assert result[0]["body_part"] == "chest"
+        assert result[0]["body_region"] == "chest"
 
     def test_object_wrapper_unwrapped(self):
-        raw = '{"extractions": [{"body_part": "abdomen", "pain_level": "moderate"}]}'
+        raw = '{"extractions": [{"body_region": "abdomen", "pain_level": "moderate"}]}'
         result = parse_body_pain_response(raw)
         assert len(result) == 1
-        assert result[0]["body_part"] == "abdomen"
+        assert result[0]["body_region"] == "abdomen"
 
     def test_pain_level_case_insensitive(self):
         raw = '[{"body_part": "knee", "pain_level": "Moderate"}]'
@@ -217,25 +162,41 @@ class TestParseBodyPainResponse:
 
     def test_mixed_valid_and_invalid(self):
         raw = json.dumps([
-            {"body_part": "knee", "pain_level": "mild"},
-            {"body_part": "", "pain_level": "severe"},
-            {"body_part": "back", "pain_level": "unknown"},
-            {"body_part": "chest", "pain_level": "moderate"},
+            {"body_region": "left_knee", "pain_level": "mild"},
+            {"body_region": "", "pain_level": "severe"},
+            {"body_region": "zzz_invalid", "pain_level": "mild"},
+            {"body_region": "chest", "pain_level": "moderate"},
         ])
         result = parse_body_pain_response(raw)
         assert len(result) == 2
-        assert result[0]["body_part"] == "knee"
-        assert result[1]["body_part"] == "chest"
+        assert result[0]["body_region"] == "left_knee"
+        assert result[1]["body_region"] == "chest"
 
     def test_non_dict_items_skipped(self):
-        raw = '[{"body_part": "knee", "pain_level": "mild"}, "invalid", 42]'
+        raw = '[{"body_region": "left_knee", "pain_level": "mild"}, "invalid", 42]'
         result = parse_body_pain_response(raw)
         assert len(result) == 1
 
     def test_unknown_object_wrapper_returns_empty(self):
-        raw = '{"unknown_key": [{"body_part": "knee", "pain_level": "mild"}]}'
+        raw = '{"unknown_key": [{"body_region": "left_knee", "pain_level": "mild"}]}'
         result = parse_body_pain_response(raw)
         assert len(result) == 0
+
+    def test_old_body_part_field_still_works(self):
+        """Backward compat: old format with body_part should be normalized."""
+        raw = '[{"body_part": "right knee", "pain_level": "moderate"}]'
+        result = parse_body_pain_response(raw)
+        assert len(result) == 1
+        assert result[0]["body_region"] == "right_knee"
+
+    def test_normalize_aliases(self):
+        assert normalize_body_region("right knee") == "right_knee"
+        assert normalize_body_region("abdomen") == "abdomen"
+        assert normalize_body_region("substernal") == "chest"
+        assert normalize_body_region("lumbar") == "lower_back"
+        assert normalize_body_region("malar") == "head"
+        assert normalize_body_region("") is None
+        assert normalize_body_region("left_hand") == "left_hand"
 
 
 # ---------------------------------------------------------------------------
@@ -279,8 +240,8 @@ class TestLLMExtraction:
             pytest.skip("pid=3245 not in fixture")
         result = extract_body_pain_row(llm_client, row.iloc[0]["patient_summary"])
         assert len(result) >= 1
-        body_parts = [e["body_part"].lower() for e in result]
-        assert any("knee" in bp for bp in body_parts)
+        body_regions = [e["body_region"] for e in result]
+        assert any("knee" in br for br in body_regions)
 
     def test_abdominal_pain_detected(self, llm_client, pmc_df):
         """pid=282: abdominal pain in Crohn's case -> should extract abdomen."""
@@ -289,8 +250,8 @@ class TestLLMExtraction:
             pytest.skip("pid=282 not in fixture")
         result = extract_body_pain_row(llm_client, row.iloc[0]["patient_summary"])
         assert len(result) >= 1
-        body_parts = [e["body_part"].lower() for e in result]
-        assert any("abdom" in bp or "quadrant" in bp for bp in body_parts)
+        body_regions = [e["body_region"] for e in result]
+        assert any("abdomen" in br for br in body_regions)
 
     def test_chest_pain_detected(self, llm_client, pmc_df):
         """pid=101: substernal chest pain -> should extract chest."""
@@ -299,8 +260,8 @@ class TestLLMExtraction:
             pytest.skip("pid=101 not in fixture")
         result = extract_body_pain_row(llm_client, row.iloc[0]["patient_summary"])
         assert len(result) >= 1
-        body_parts = [e["body_part"].lower() for e in result]
-        assert any("chest" in bp or "substernal" in bp for bp in body_parts)
+        body_regions = [e["body_region"] for e in result]
+        assert any("chest" in br for br in body_regions)
 
     def test_pleuritic_chest_pain_detected(self, llm_client, pmc_df):
         """pid=2439: pleuritic chest pain in Wegener's case."""
@@ -309,8 +270,8 @@ class TestLLMExtraction:
             pytest.skip("pid=2439 not in fixture")
         result = extract_body_pain_row(llm_client, row.iloc[0]["patient_summary"])
         assert len(result) >= 1
-        body_parts = [e["body_part"].lower() for e in result]
-        assert any("chest" in bp for bp in body_parts)
+        body_regions = [e["body_region"] for e in result]
+        assert any("chest" in br for br in body_regions)
 
     def test_no_pain_case_returns_list(self, llm_client, pmc_df):
         """pid=2351: meningitis case with no pain in summary -> returns a list."""
@@ -338,8 +299,11 @@ class TestLLMExtraction:
         row = pain_rows.iloc[0]
         result = extract_body_pain_row(llm_client, row["patient_summary"])
         for item in result:
-            assert isinstance(item["body_part"], str)
-            assert len(item["body_part"].strip()) > 0
+            assert isinstance(item["body_region"], str)
+            assert len(item["body_region"].strip()) > 0
+            assert item["body_region"] in VALID_BODY_REGIONS, (
+                f"Region not in valid set: {item['body_region']}"
+            )
 
     def test_result_is_json_serializable(self, llm_client, pain_rows):
         """Result should round-trip through JSON serialization."""
@@ -365,8 +329,8 @@ class TestLLMExtraction:
             pytest.skip("pid=850 not in fixture")
         result = extract_body_pain_row(llm_client, row.iloc[0]["patient_summary"])
         assert len(result) >= 1
-        body_parts = [e["body_part"].lower() for e in result]
-        assert any("abdom" in bp or "quadrant" in bp for bp in body_parts)
+        body_regions = [e["body_region"] for e in result]
+        assert any("abdomen" in br for br in body_regions)
 
     def test_raw_llm_response_is_valid_json(self, llm_client, pmc_df):
         """Raw LLM response should be parseable as JSON."""

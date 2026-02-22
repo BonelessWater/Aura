@@ -55,24 +55,128 @@ BATCH_SIZE = 1000
 VALID_PAIN_LEVELS = {"mild", "moderate", "severe"}
 
 SYSTEM_PROMPT = (
-    "You extract body-part and pain-level information from medical case reports. "
+    "You extract body-region and pain-level information from medical case reports. "
     "For each mention of pain, discomfort, ache, tenderness, or soreness in the text, identify:\n"
-    "1. body_part: the anatomical location (e.g. \"right knee\", \"lower back\", \"abdomen\")\n"
-    "2. pain_level: classify as \"mild\", \"moderate\", or \"severe\"\n\n"
+    "1. body_region: MUST be one of these exact values:\n"
+    "   head, neck, chest, upper_back, lower_back, abdomen,\n"
+    "   left_shoulder, right_shoulder, left_upper_arm, right_upper_arm,\n"
+    "   left_forearm, right_forearm, left_hand, right_hand,\n"
+    "   left_hip, right_hip, left_upper_leg, right_upper_leg,\n"
+    "   left_knee, right_knee, left_lower_leg, right_lower_leg,\n"
+    "   left_foot, right_foot, whole_body\n"
+    "   If a location is described without laterality (e.g. just 'knee'), use 'left_' prefix.\n"
+    "   If pain is diffuse or generalized, use 'whole_body'.\n"
+    "2. pain_level: classify as 'mild', 'moderate', or 'severe'\n\n"
     "Classification guidance for pain_level:\n"
-    "- \"mild\": described as mild, slight, minor, intermittent without distress, "
+    "- 'mild': described as mild, slight, minor, intermittent without distress, "
     "or managed with OTC medication\n"
-    "- \"moderate\": described as moderate, persistent, recurrent, requiring prescription "
+    "- 'moderate': described as moderate, persistent, recurrent, requiring prescription "
     "medication, or causing functional limitation\n"
-    "- \"severe\": described as severe, intense, acute, excruciating, debilitating, "
+    "- 'severe': described as severe, intense, acute, excruciating, debilitating, "
     "or requiring emergency intervention\n\n"
     "If no pain, discomfort, ache, tenderness, or soreness is mentioned, return an empty JSON array.\n"
     "Reply with ONLY a JSON array. No other text.\n\n"
     "Example output:\n"
-    '[{"body_part": "right knee", "pain_level": "moderate"}, '
-    '{"body_part": "lower back", "pain_level": "severe"}]\n'
+    '[{"body_region": "right_knee", "pain_level": "moderate"}, '
+    '{"body_region": "lower_back", "pain_level": "severe"}]\n'
     "If no pain: []"
 )
+
+# Canonical body regions (matching the 3D model bone groups)
+VALID_BODY_REGIONS = {
+    "head", "neck", "chest", "upper_back", "lower_back", "abdomen",
+    "left_shoulder", "right_shoulder", "left_upper_arm", "right_upper_arm",
+    "left_forearm", "right_forearm", "left_hand", "right_hand",
+    "left_hip", "right_hip", "left_upper_leg", "right_upper_leg",
+    "left_knee", "right_knee", "left_lower_leg", "right_lower_leg",
+    "left_foot", "right_foot", "whole_body",
+}
+
+# Fallback aliases for free-text body parts the LLM might still produce
+BODY_REGION_ALIASES = {
+    # Head / face
+    "face": "head", "scalp": "head", "temple": "head", "forehead": "head",
+    "jaw": "head", "eye": "head", "ear": "head", "skull": "head",
+    "malar": "head",
+    # Neck
+    "throat": "neck", "cervical": "neck",
+    # Chest
+    "substernal": "chest", "sternum": "chest", "rib": "chest",
+    "left chest": "chest", "right chest": "chest", "pectoral": "chest",
+    "breast": "chest", "thorax": "chest", "pleuritic": "chest",
+    # Back
+    "back": "lower_back", "lumbar": "lower_back", "lumbosacral": "lower_back",
+    "thoracic": "upper_back", "scapula": "upper_back",
+    "left scapula": "upper_back", "right scapula": "upper_back",
+    # Abdomen
+    "epigastric": "abdomen", "periumbilical": "abdomen",
+    "right upper quadrant": "abdomen", "left upper quadrant": "abdomen",
+    "right lower quadrant": "abdomen", "left lower quadrant": "abdomen",
+    "suprapubic": "abdomen", "pelvic": "abdomen", "pelvis": "abdomen",
+    "groin": "abdomen", "flank": "abdomen", "abdominal": "abdomen",
+    # Shoulders
+    "shoulder": "left_shoulder", "left shoulder": "left_shoulder",
+    "right shoulder": "right_shoulder",
+    # Arms
+    "arm": "left_upper_arm", "left arm": "left_upper_arm",
+    "right arm": "right_upper_arm", "upper arm": "left_upper_arm",
+    "bicep": "left_upper_arm", "elbow": "left_forearm",
+    "left elbow": "left_forearm", "right elbow": "right_forearm",
+    "forearm": "left_forearm", "left forearm": "left_forearm",
+    "right forearm": "right_forearm", "wrist": "left_hand",
+    "left wrist": "left_hand", "right wrist": "right_hand",
+    # Hands
+    "hand": "left_hand", "left hand": "left_hand", "right hand": "right_hand",
+    "finger": "left_hand", "fingers": "left_hand",
+    "left finger": "left_hand", "right finger": "right_hand",
+    # Hips
+    "hip": "left_hip", "left hip": "left_hip", "right hip": "right_hip",
+    "sacroiliac": "left_hip",
+    # Upper legs
+    "thigh": "left_upper_leg", "left thigh": "left_upper_leg",
+    "right thigh": "right_upper_leg", "quadricep": "left_upper_leg",
+    "hamstring": "left_upper_leg",
+    # Knees
+    "knee": "left_knee", "left knee": "left_knee", "right knee": "right_knee",
+    "left knee joint": "left_knee", "right knee joint": "right_knee",
+    "patellar": "left_knee",
+    # Lower legs
+    "calf": "left_lower_leg", "left calf": "left_lower_leg",
+    "right calf": "right_lower_leg", "shin": "left_lower_leg",
+    "leg": "left_lower_leg", "left leg": "left_lower_leg",
+    "right leg": "right_lower_leg", "tibia": "left_lower_leg",
+    "ankle": "left_foot", "left ankle": "left_foot", "right ankle": "right_foot",
+    # Feet
+    "foot": "left_foot", "left foot": "left_foot", "right foot": "right_foot",
+    "toe": "left_foot", "heel": "left_foot",
+    # Whole body / diffuse
+    "whole body": "whole_body", "diffuse": "whole_body",
+    "generalized": "whole_body", "widespread": "whole_body",
+    "body": "whole_body", "multiple joints": "whole_body",
+}
+
+
+def normalize_body_region(raw_part):
+    """Normalize a free-text body part string to a canonical body_region.
+
+    Returns a valid region ID or None if unmappable.
+    """
+    if not raw_part:
+        return None
+    cleaned = raw_part.strip().lower().replace("_", " ")
+    # Check if already canonical (with underscores restored)
+    canonical = cleaned.replace(" ", "_")
+    if canonical in VALID_BODY_REGIONS:
+        return canonical
+    # Try alias lookup
+    if cleaned in BODY_REGION_ALIASES:
+        return BODY_REGION_ALIASES[cleaned]
+    # Partial match fallback
+    for alias, region in BODY_REGION_ALIASES.items():
+        if alias in cleaned or cleaned in alias:
+            return region
+    logger.warning("Could not normalize body part to region: %r", raw_part)
+    return None
 
 # COMMAND ----------
 
@@ -123,12 +227,14 @@ def parse_body_pain_response(response_text):
     for item in data:
         if not isinstance(item, dict):
             continue
-        bp = item.get("body_part", "").strip()
+        # Support both old 'body_part' and new 'body_region' field names
+        raw_part = (item.get("body_region") or item.get("body_part", "")).strip()
         pl = item.get("pain_level", "").strip().lower()
-        if bp and pl in VALID_PAIN_LEVELS:
-            validated.append({"body_part": bp, "pain_level": pl})
+        region = normalize_body_region(raw_part)
+        if region and pl in VALID_PAIN_LEVELS:
+            validated.append({"body_region": region, "pain_level": pl})
         else:
-            logger.warning("Dropping invalid extraction: body_part=%r, pain_level=%r", bp, pl)
+            logger.warning("Dropping invalid extraction: raw=%r, pain_level=%r, normalized=%r", raw_part, pl, region)
 
     return validated
 
@@ -368,10 +474,11 @@ def extract_body_pain_all():
     return merged
 
 
-output_df = extract_body_pain_all()
-if output_df is not None:
-    n = (output_df["body_pain_count"] > 0).sum()
-    logger.info("Done: %d total, %d with pain data", len(output_df), n)
+if __name__ == "__main__":
+    output_df = extract_body_pain_all()
+    if output_df is not None:
+        n = (output_df["body_pain_count"] > 0).sum()
+        logger.info("Done: %d total, %d with pain data", len(output_df), n)
 
 # COMMAND ----------
 
