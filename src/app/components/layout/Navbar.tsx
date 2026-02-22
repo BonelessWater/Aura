@@ -29,6 +29,7 @@ export const Navbar = () => {
 
   const isHome = location.pathname === '/';
   const isVault = location.pathname === '/vault';
+  const isPresent = location.pathname === '/present';
 
   return (
     <motion.nav
@@ -47,6 +48,22 @@ export const Navbar = () => {
         <span className="font-display text-lg text-white/90 tracking-wide hidden sm:inline group-hover:text-white transition-colors">
           Aura
         </span>
+      </button>
+
+      {/* Center: Present link */}
+      <button
+        onClick={() => navigate('/present')}
+        className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+          isPresent
+            ? 'bg-[#7B61FF]/20 text-[#7B61FF] border border-[#7B61FF]/30'
+            : 'text-[#8A93B2] hover:text-[#F0F2F8] hover:bg-white/5'
+        }`}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="opacity-70">
+          <rect x="1" y="1" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M4 6l2-2 2 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Present
       </button>
 
       {/* Right: Avatar */}

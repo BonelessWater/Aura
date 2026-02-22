@@ -6,6 +6,7 @@ import { DashboardPage } from "./views/DashboardPage";
 import { Vault } from "./views/Vault";
 import { ClinicianPortal } from "./views/ClinicianPortal";
 import { BodyModel } from "./components/results/BodyModel";
+import { Present } from "./views/Present";
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
       {
         path: "body",
         Component: () => <BodyModel onClose={() => window.history.back()} />,
+      },
+      {
+        path: "present",
+        Component: Present,
       },
     ],
   },
