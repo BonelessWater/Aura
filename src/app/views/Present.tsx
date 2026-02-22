@@ -470,42 +470,40 @@ export const Present = () => {
       {/* ── 5. EARLY DETECTION ───────────────────────────────────────────── */}
       <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto w-full">
-          <div className="grid md:grid-cols-2 gap-16 items-start mb-12">
-            <FadeIn>
-              <SectionLabel>Early Detection</SectionLabel>
-              <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
-                Confident at <span className="text-[#52D0A0]">Visit 1.</span>
-                <br />Before symptoms escalate.
-              </h2>
-              <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
-                Using only demographics and a basic CBC from the very first visit, the model already
-                flags systemic autoimmune disease at <span className="text-[#F0F2F8]">72% confidence</span>.
-                For healthy patients, it avoids unnecessary workups — saving visits and cost.
-              </p>
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl border border-[#52D0A0]/20 bg-[#52D0A0]/5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-[#52D0A0]" />
-                    <span className="text-[#52D0A0] font-medium text-sm">Healthy patients</span>
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <span className="font-display text-3xl text-[#52D0A0]">98%</span>
-                    <span className="text-[#8A93B2] text-sm mb-1">save 3 visits</span>
-                  </div>
+          <FadeIn className="text-center mb-12 max-w-3xl mx-auto">
+            <SectionLabel>Early Detection</SectionLabel>
+            <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
+              Confident at <span className="text-[#52D0A0]">Visit 1.</span>
+              <br />Before symptoms escalate.
+            </h2>
+            <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
+              Using only demographics and a basic CBC from the very first visit, the model already
+              flags systemic autoimmune disease at <span className="text-[#F0F2F8]">72% confidence</span>.
+              For healthy patients, it avoids unnecessary workups — saving visits and cost.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <div className="p-4 rounded-xl border border-[#52D0A0]/20 bg-[#52D0A0]/5 flex-1 max-w-xs">
+                <div className="flex items-center gap-2 mb-1 justify-center">
+                  <div className="w-2 h-2 rounded-full bg-[#52D0A0]" />
+                  <span className="text-[#52D0A0] font-medium text-sm">Healthy patients</span>
                 </div>
-                <div className="p-4 rounded-xl border border-[#7B61FF]/20 bg-[#7B61FF]/5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-[#7B61FF]" />
-                    <span className="text-[#7B61FF] font-medium text-sm">Systemic autoimmune</span>
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <span className="font-display text-3xl text-[#7B61FF]">99%</span>
-                    <span className="text-[#8A93B2] text-sm mb-1">save 1 or more visits</span>
-                  </div>
+                <div className="flex items-end gap-2 justify-center">
+                  <span className="font-display text-3xl text-[#52D0A0]">98%</span>
+                  <span className="text-[#8A93B2] text-sm mb-1">save 3 visits</span>
                 </div>
               </div>
-            </FadeIn>
-          </div>
+              <div className="p-4 rounded-xl border border-[#7B61FF]/20 bg-[#7B61FF]/5 flex-1 max-w-xs">
+                <div className="flex items-center gap-2 mb-1 justify-center">
+                  <div className="w-2 h-2 rounded-full bg-[#7B61FF]" />
+                  <span className="text-[#7B61FF] font-medium text-sm">Systemic autoimmune</span>
+                </div>
+                <div className="flex items-end gap-2 justify-center">
+                  <span className="font-display text-3xl text-[#7B61FF]">99%</span>
+                  <span className="text-[#8A93B2] text-sm mb-1">save 1 or more visits</span>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
 
           <FadeIn delay={0.15}>
             <WideChartCard
