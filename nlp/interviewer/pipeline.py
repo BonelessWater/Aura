@@ -21,11 +21,7 @@ from typing import Optional
 
 from nlp.shared.schemas import Cluster, InterviewResult, SymptomEntity
 from nlp.shared.thought_stream import ThoughtStream
-from nlp.interviewer.ner_pipeline import (
-    _get_default_pipeline,
-    extract_entities,
-    extract_entities_regex,
-)
+from nlp.interviewer.ner_pipeline import extract_entities_regex
 from nlp.interviewer.cluster_mapper import tag_cluster_signal, link_snomed
 from nlp.interviewer.relation_extractor import extract_relations
 from nlp.interviewer.temporal_normalizer import normalize_duration, normalize_date
@@ -57,22 +53,14 @@ def run_interviewer(
         patient_id=patient_id,
     )
 
-    # ── Step 1: NER ──────────────────────────────────────────────────────────
-    try:
-        nlp = _get_default_pipeline()
-        raw_entities = extract_entities(symptom_text, nlp=nlp)
-    except Exception as e:
-        logger.warning(
-            "spaCy/scispaCy NER unavailable (%s). Falling back to regex extraction.",
-            e,
-        )
-        ThoughtStream.emit(
-            agent="The Interviewer",
-            step="ner_fallback",
-            summary="spaCy NER unavailable — using regex fallback extraction",
-            patient_id=patient_id,
-        )
-        raw_entities = extract_entities_regex(symptom_text)
+    # ── Step 1: Regex extraction (spaCy-free mode) ───────────────────────────
+    raw_entities = extract_entities_regex(symptom_text)
+    ThoughtStream.emit(
+        agent="The Interviewer",
+        step="ner_regex",
+        summary="Using regex-only symptom extraction",
+        patient_id=patient_id,
+    )
     disease_ents = [e for e in raw_entities if e["label"] in ("DISEASE", "CHEMICAL", "SYMPTOM", "PROBLEM")]
 
     # ── Step 2: Cluster mapping ───────────────────────────────────────────────
