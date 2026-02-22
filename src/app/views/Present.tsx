@@ -362,41 +362,45 @@ export const Present = () => {
       <Divider />
 
       {/* ── 3. THE DATASET ───────────────────────────────────────────────── */}
-      <section className="min-h-screen flex items-center px-6 py-24">
-        <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
-          <FadeIn delay={0.1} className="order-2 md:order-1">
-            <ChartCard
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto w-full">
+          <div className="grid md:grid-cols-2 gap-16 items-start mb-12">
+            <FadeIn>
+              <SectionLabel>The Dataset</SectionLabel>
+              <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
+                Built on <span className="text-[#3ECFCF]">real patient data</span> from 3 sources.
+              </h2>
+              <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
+                We harmonized 48,503 de-identified patient records across NHANES (73.6%), Harvard
+                Dataverse (24.8%), and supplementary clinical data — spanning CBC panels, inflammatory
+                markers, demographics, and multi-visit trajectories.
+              </p>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                {[
+                  { label: 'Healthy', n: '32,706', color: '#52D0A0' },
+                  { label: 'Systemic Autoimmune', n: '13,030', color: '#7B61FF' },
+                  { label: 'GI Autoimmune', n: '801', color: '#3ECFCF' },
+                  { label: 'Endocrine Autoimmune', n: '1,966', color: '#F4A261' },
+                ].map((c) => (
+                  <div
+                    key={c.label}
+                    className="p-3 rounded-lg border border-white/5 bg-[#13161F]/65"
+                    style={{ borderLeftColor: c.color, borderLeftWidth: 3 }}
+                  >
+                    <div className="font-mono text-lg" style={{ color: c.color }}>{c.n}</div>
+                    <div className="text-[#8A93B2] text-xs">{c.label}</div>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+          </div>
+          <FadeIn delay={0.15}>
+            <WideChartCard
               src="/figures/01_demographics.png"
               caption="48,503 patients across 4 disease clusters — age and sex breakdown"
             />
-          </FadeIn>
-          <FadeIn className="order-1 md:order-2">
-            <SectionLabel>The Dataset</SectionLabel>
-            <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
-              Built on <span className="text-[#3ECFCF]">real patient data</span> from 3 sources.
-            </h2>
-            <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
-              We harmonized 48,503 de-identified patient records across NHANES (73.6%), Harvard
-              Dataverse (24.8%), and supplementary clinical data — spanning CBC panels, inflammatory
-              markers, demographics, and multi-visit trajectories.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Healthy', n: '32,706', color: '#52D0A0' },
-                { label: 'Systemic Autoimmune', n: '13,030', color: '#7B61FF' },
-                { label: 'GI Autoimmune', n: '801', color: '#3ECFCF' },
-                { label: 'Endocrine Autoimmune', n: '1,966', color: '#F4A261' },
-              ].map((c) => (
-                <div
-                  key={c.label}
-                  className="p-3 rounded-lg border border-white/5 bg-[#13161F]/65"
-                  style={{ borderLeftColor: c.color, borderLeftWidth: 3 }}
-                >
-                  <div className="font-mono text-lg" style={{ color: c.color }}>{c.n}</div>
-                  <div className="text-[#8A93B2] text-xs">{c.label}</div>
-                </div>
-              ))}
-            </div>
           </FadeIn>
         </div>
       </section>
@@ -464,42 +468,44 @@ export const Present = () => {
       <Divider />
 
       {/* ── 5. EARLY DETECTION ───────────────────────────────────────────── */}
-      <section className="min-h-screen flex items-center px-6 py-24">
-        <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
-          <FadeIn>
-            <SectionLabel>Early Detection</SectionLabel>
-            <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
-              Confident at <span className="text-[#52D0A0]">Visit 1.</span>
-              <br />Before symptoms escalate.
-            </h2>
-            <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
-              Using only demographics and a basic CBC from the very first visit, the model already
-              flags systemic autoimmune disease at <span className="text-[#F0F2F8]">72% confidence</span>.
-              For healthy patients, it avoids unnecessary workups — saving visits and cost.
-            </p>
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl border border-[#52D0A0]/20 bg-[#52D0A0]/5">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 rounded-full bg-[#52D0A0]" />
-                  <span className="text-[#52D0A0] font-medium text-sm">Healthy patients</span>
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto w-full">
+          <div className="grid md:grid-cols-2 gap-16 items-start mb-12">
+            <FadeIn>
+              <SectionLabel>Early Detection</SectionLabel>
+              <h2 className="font-display text-4xl md:text-5xl font-light mb-6 leading-tight">
+                Confident at <span className="text-[#52D0A0]">Visit 1.</span>
+                <br />Before symptoms escalate.
+              </h2>
+              <p className="text-[#8A93B2] text-lg leading-relaxed mb-8">
+                Using only demographics and a basic CBC from the very first visit, the model already
+                flags systemic autoimmune disease at <span className="text-[#F0F2F8]">72% confidence</span>.
+                For healthy patients, it avoids unnecessary workups — saving visits and cost.
+              </p>
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl border border-[#52D0A0]/20 bg-[#52D0A0]/5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-[#52D0A0]" />
+                    <span className="text-[#52D0A0] font-medium text-sm">Healthy patients</span>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <span className="font-display text-3xl text-[#52D0A0]">98%</span>
+                    <span className="text-[#8A93B2] text-sm mb-1">save 3 visits</span>
+                  </div>
                 </div>
-                <div className="flex items-end gap-2">
-                  <span className="font-display text-3xl text-[#52D0A0]">98%</span>
-                  <span className="text-[#8A93B2] text-sm mb-1">save 3 visits</span>
+                <div className="p-4 rounded-xl border border-[#7B61FF]/20 bg-[#7B61FF]/5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-[#7B61FF]" />
+                    <span className="text-[#7B61FF] font-medium text-sm">Systemic autoimmune</span>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <span className="font-display text-3xl text-[#7B61FF]">99%</span>
+                    <span className="text-[#8A93B2] text-sm mb-1">save 1 or more visits</span>
+                  </div>
                 </div>
               </div>
-              <div className="p-4 rounded-xl border border-[#7B61FF]/20 bg-[#7B61FF]/5">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 rounded-full bg-[#7B61FF]" />
-                  <span className="text-[#7B61FF] font-medium text-sm">Systemic autoimmune</span>
-                </div>
-                <div className="flex items-end gap-2">
-                  <span className="font-display text-3xl text-[#7B61FF]">99%</span>
-                  <span className="text-[#8A93B2] text-sm mb-1">save 1 or more visits</span>
-                </div>
-              </div>
-            </div>
-          </FadeIn>
+            </FadeIn>
+          </div>
 
           <FadeIn delay={0.15}>
             <WideChartCard
@@ -603,21 +609,21 @@ export const Present = () => {
             />
           </FadeIn>
 
-          {/* Cluster distribution + lab distributions row */}
-          <div className="grid md:grid-cols-2 gap-8 mb-10">
-            <FadeIn delay={0.1}>
-              <ChartCard
-                src="/figures/01_cluster_distribution.png"
-                caption="Disease cluster distribution across the full dataset"
-              />
-            </FadeIn>
-            <FadeIn delay={0.2}>
-              <ChartCard
-                src="/figures/05_zscore_analysis.png"
-                caption="Z-score distributions — normalization reveals population-level deviations per cluster"
-              />
-            </FadeIn>
-          </div>
+          {/* Cluster distribution — full width */}
+          <FadeIn delay={0.1} className="mb-10">
+            <WideChartCard
+              src="/figures/01_cluster_distribution.png"
+              caption="Disease cluster distribution across the full dataset"
+            />
+          </FadeIn>
+
+          {/* Z-score distribution — full width */}
+          <FadeIn delay={0.1} className="mb-10">
+            <WideChartCard
+              src="/figures/05_zscore_analysis.png"
+              caption="Z-score distributions — normalization reveals population-level deviations per cluster"
+            />
+          </FadeIn>
 
           {/* Feature correlation — near-square, centered, capped width */}
           <FadeIn delay={0.1} className="mb-10">
