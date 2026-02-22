@@ -1,4 +1,5 @@
 from backend.routers import (
+    body_map,
     extract,
     interview,
     jobs,
@@ -12,6 +13,7 @@ from backend.routers import (
 )
 
 __all__ = [
+    "body_map",
     "extract",
     "interview",
     "jobs",

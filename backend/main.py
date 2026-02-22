@@ -25,6 +25,7 @@ from backend.thought_stream_patch import apply_patch
 apply_patch()
 
 from backend.routers import (  # noqa: E402 — must come after patch
+    body_map,
     extract,
     interview,
     jobs,
@@ -80,6 +81,7 @@ app.add_middleware(
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
+app.include_router(body_map.router, tags=["Body Map"])
 app.include_router(extract.router, tags=["Pipeline"])
 app.include_router(interview.router, tags=["Pipeline"])
 app.include_router(research.router, tags=["Pipeline"])

@@ -31,7 +31,8 @@ interface BodyRegion {
   explanation: string;
 }
 
-const bodyRegions: BodyRegion[] = [
+// Default demo regions (used when no patientId is provided)
+const DEFAULT_BODY_REGIONS: BodyRegion[] = [
   {
     id: 'head',
     label: 'Face -- Malar Rash',
@@ -114,12 +115,20 @@ const bodyRegions: BodyRegion[] = [
 // -- GLTF human body model with skeleton-anchored hotspots --
 const MODEL_PATH = '/models/human_body.glb';
 
+// Simple logging wrapper
+const logger = (...args: unknown[]) => {
+  // eslint-disable-next-line no-console
+  console.warn('[BodyModel]', ...args);
+};
+
 function HumanBody({
   onSelectRegion,
   activeRegion,
+  regions,
 }: {
   onSelectRegion: (region: BodyRegion | null) => void;
   activeRegion: string | null;
+  regions: BodyRegion[];
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const { scene, nodes } = useGLTF(MODEL_PATH) as any;
@@ -168,9 +177,9 @@ function HumanBody({
 
   const regionSeverityMap = useMemo(() => {
     const m: Record<string, keyof typeof SEVERITY_COLORS> = {};
-    bodyRegions.forEach((r) => { m[r.id] = r.severity; });
+    regions.forEach((r) => { m[r.id] = r.severity; });
     return m;
-  }, []);
+  }, [regions]);
 
   // Paint vertex colors on skinned meshes based on bone weights
   useEffect(() => {
@@ -259,7 +268,7 @@ function HumanBody({
       <primitive object={scene} />
 
       {/* Click targets anchored to skeleton bones */}
-      {bodyRegions.map((region) => {
+      {regions.map((region) => {
         const bonePos = bonePositions[region.boneName];
         if (!bonePos) return null;
 
@@ -373,9 +382,11 @@ function ClickTarget({
 function BodyScene({
   onSelectRegion,
   activeRegion,
+  regions,
 }: {
   onSelectRegion: (region: BodyRegion | null) => void;
   activeRegion: string | null;
+  regions: BodyRegion[];
 }) {
   return (
     <>
@@ -398,6 +409,7 @@ function BodyScene({
         <HumanBody
           onSelectRegion={onSelectRegion}
           activeRegion={activeRegion}
+          regions={regions}
         />
       </Suspense>
 
@@ -413,11 +425,73 @@ function BodyScene({
   );
 }
 
-// -- Main BodyModel overlay (same API as original) --
-export const BodyModel = ({ onClose }: { onClose: () => void }) => {
+// Backend API base URL
+const API_BASE = 'http://localhost:8000';
+
+// Map backend severity names to display severity keys
+function mapSeverity(sev: string): keyof typeof SEVERITY_COLORS {
+  if (sev === 'severe') return 'high';
+  if (sev === 'moderate') return 'moderate';
+  return 'low';
+}
+
+// -- Main BodyModel overlay --
+export const BodyModel = ({
+  onClose,
+  patientId,
+}: {
+  onClose: () => void;
+  patientId?: string;
+}) => {
   const [activeRegion, setActiveRegion] = useState<string | null>(null);
+  const [regions, setRegions] = useState<BodyRegion[]>(DEFAULT_BODY_REGIONS);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch body regions from backend when a patientId is provided
+  useEffect(() => {
+    if (!patientId) {
+      setRegions(DEFAULT_BODY_REGIONS);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fetch(`${API_BASE}/body-map/${patientId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const mapped: BodyRegion[] = (data.regions || []).map((r: any) => ({
+          id: r.body_region,
+          label: r.label,
+          boneName: r.bone_name,
+          offset: r.offset || [0, 0, 0],
+          radius: r.radius || 0.04,
+          severity: mapSeverity(r.severity),
+          status: r.status,
+          explanation: r.explanation,
+        }));
+        setRegions(mapped.length > 0 ? mapped : DEFAULT_BODY_REGIONS);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        logger('Failed to fetch body map from backend: %s', err);
+        setError(err.message);
+        setRegions(DEFAULT_BODY_REGIONS);
+        setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [patientId]);
+
   const selectedRegion =
-    bodyRegions.find((r) => r.id === activeRegion) ?? null;
+    regions.find((r) => r.id === activeRegion) ?? null;
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-[#0A0D14]/95 backdrop-blur-sm">
@@ -446,6 +520,7 @@ export const BodyModel = ({ onClose }: { onClose: () => void }) => {
             <BodyScene
               onSelectRegion={(r) => setActiveRegion(r?.id ?? null)}
               activeRegion={activeRegion}
+              regions={regions}
             />
           </Canvas>
 
@@ -590,7 +665,7 @@ export const BodyModel = ({ onClose }: { onClose: () => void }) => {
 
                 {/* Quick summary list of all regions */}
                 <div className="mt-6 space-y-2 w-full text-left">
-                  {bodyRegions
+                  {regions
                     .filter(
                       (r, i, arr) =>
                         arr.findIndex((a) => a.label === r.label) === i
