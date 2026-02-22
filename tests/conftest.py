@@ -1,4 +1,13 @@
+"""
+Shared test fixtures for the Aura test suite.
+
+Provides backend test infrastructure (ASGI client, store cleanup, SSE helpers)
+and report agent fixtures (requires_databricks, requires_llm, requires_backend,
+DEMO_CASES).
+"""
+
 import json
+import os
 import tempfile
 from pathlib import Path
 from typing import AsyncIterator
@@ -13,7 +22,17 @@ from backend.session import _sessions
 from backend.utils.background import _jobs
 
 
-# ── Startup verification ───────────────────────────────────────────────────────
+# ── Report agent demo cases ──────────────────────────────────────────────────
+
+DEMO_CASES = {
+    "systemic": "harvard_08670",
+    "gi":       "nhanes_90119",
+    "nuanced":  "nhanes_73741",
+    "healthy":  "nhanes_79163",
+}
+
+
+# ── Startup verification ─────────────────────────────────────────────────────
 
 @pytest.fixture(scope="session", autouse=True)
 def verify_backend_startup():
@@ -67,18 +86,45 @@ def sample_pdf() -> Path:
     tmp.unlink(missing_ok=True)
 
 
-# ── LLM availability ──────────────────────────────────────────────────────────
+# ── LLM availability ─────────────────────────────────────────────────────────
 
 @pytest.fixture
 def llm_available():
     """Skip test if no LLM backend (Azure OpenAI or vLLM) is configured."""
-    import os
     has_azure = bool(os.environ.get("AZURE_OPENAI_ENDPOINT"))
     has_vllm = bool(os.environ.get("AURA_VLLM_BASE_URL"))
     if not has_azure and not has_vllm:
         pytest.skip(
             "No LLM backend configured (need AZURE_OPENAI_ENDPOINT or AURA_VLLM_BASE_URL)"
         )
+
+
+# ── Report agent environment fixtures ────────────────────────────────────────
+
+@pytest.fixture(scope="session")
+def requires_databricks():
+    if not os.environ.get("DATABRICKS_HOST"):
+        pytest.skip("Databricks not configured")
+
+
+@pytest.fixture(scope="session")
+def requires_llm():
+    has_azure = bool(os.environ.get("AZURE_OPENAI_ENDPOINT"))
+    has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    has_vllm = bool(os.environ.get("AURA_VLLM_BASE_URL"))
+    if not (has_azure or has_anthropic or has_vllm):
+        pytest.skip("No LLM backend configured")
+
+
+@pytest.fixture(scope="session")
+def requires_backend():
+    """Skip test if FastAPI backend is not running."""
+    try:
+        r = httpx.get("http://localhost:8000/health", timeout=2)
+        if r.status_code != 200:
+            pytest.skip("Backend not healthy")
+    except Exception:
+        pytest.skip("Backend not running")
 
 
 # ── SSE helper ────────────────────────────────────────────────────────────────
