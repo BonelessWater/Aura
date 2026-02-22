@@ -27,7 +27,7 @@
 
 @layer base {
   body {
-    background-color: var(--color-background);
+    background-color: transparent;
     color: var(--color-text);
     font-family: var(--font-sans);
     line-height: 1.6;

@@ -1,16 +1,42 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router';
 import { Button } from '../ui/Button';
-// Icons removed — trust chips no longer shown
 
 export const Hero = ({ onStart }: { onStart: () => void }) => {
+  const navigate = useNavigate();
+
+  const handleCTA = () => {
+    navigate('/login', { state: { signup: true } });
+  };
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 md:px-12 max-w-[1400px] mx-auto overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 w-full pt-20">
+    <section className="relative min-h-screen flex flex-col items-center px-4 md:px-12 overflow-hidden">
+
+      {/* AuRA Logo — centered near top */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="pt-4 pb-4 flex flex-col items-center"
+      >
+        <h1
+          className="font-display text-5xl font-bold tracking-[0.1em] text-white/90 select-none"
+          style={{ textShadow: '0 0 40px rgba(140, 7, 22, 0.8), 0 0 80px rgba(140, 7, 22, 0.4)' }}
+        >
+          A<span className="text-white/60">u</span>RA
+        </h1>
+        <p className="text-[#8c3030] font-mono text-xs tracking-[0.3em] uppercase mt-1">
+          Autoimmune Research Assistant
+        </p>
+      </motion.div>
+
+      {/* Main hero grid */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-12 w-full max-w-[1400px] mx-auto items-center">
         
         {/* Left Content */}
         <div className="lg:col-span-3 flex flex-col justify-center space-y-8 z-10">
-          
+
           {/* Tag */}
           <div className="flex items-center space-x-2 text-[#3ECFCF] font-mono text-sm tracking-widest uppercase">
             <span>Private. Local. Cited.</span>
@@ -54,10 +80,10 @@ export const Hero = ({ onStart }: { onStart: () => void }) => {
             className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-4"
           >
             <Button 
-              onClick={onStart} 
-              className="h-[52px] px-8 text-lg bg-[#00B4D8] hover:bg-[#0096B7] text-white shadow-[0_0_20px_rgba(0,180,216,0.35)] hover:shadow-[0_0_28px_rgba(0,180,216,0.5)] transition-all"
+              onClick={handleCTA} 
+              className="h-[52px] px-8 text-lg bg-[#8c0716] hover:bg-[#a80920] text-white shadow-[0_0_20px_rgba(140,7,22,0.45)] hover:shadow-[0_0_32px_rgba(140,7,22,0.65)] transition-all rounded-md"
             >
-              Upload My Labs
+              Sign Up to Get Started
             </Button>
           </motion.div>
         </div>
