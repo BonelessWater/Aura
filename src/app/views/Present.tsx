@@ -28,7 +28,7 @@ function StatCounter({
   const count = useCounter(value, duration, isInView);
   return (
     <div ref={ref} className="flex flex-col items-center gap-1">
-      <span className="font-display text-5xl md:text-6xl font-light" style={{ color }}>
+      <span className="font-display text-5xl md:text-6xl font-semibold tracking-[0.04em]" style={{ color }}>
         {prefix}{count.toLocaleString()}{suffix}
       </span>
       <span className="text-xs text-[#8A93B2] tracking-widest uppercase text-center">{label}</span>
@@ -299,10 +299,10 @@ function SectionNav() {
 function StatPill({ value, label, color }: { value: string; label: string; color: string }) {
   return (
     <div
-      className="flex flex-col items-center px-6 py-4 rounded-2xl border bg-white/[0.04] backdrop-blur-xl"
-      style={{ borderColor: `${color}20` }}
+      className="flex flex-col items-center px-6 py-4 rounded-2xl border bg-[#13161F]/80 backdrop-blur-md"
+      style={{ borderColor: `${color}35` }}
     >
-      <span className="font-display text-3xl md:text-4xl font-light" style={{ color }}>{value}</span>
+      <span className="font-display text-3xl md:text-4xl font-semibold tracking-[0.04em]" style={{ color }}>{value}</span>
       <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase mt-1 text-center">{label}</span>
     </div>
   );
@@ -349,19 +349,19 @@ export const Present = () => {
 
         <FadeIn className="relative z-10 max-w-4xl w-full">
           {/* Event tag */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#7B61FF]/25 bg-[#7B61FF]/[0.08] backdrop-blur-md mb-8">
             <div className="w-1.5 h-1.5 rounded-full bg-[#3ECFCF] animate-pulse" />
             <span className="text-xs font-mono tracking-widest text-[#8A93B2] uppercase">Golden Byte 2026 · Aura</span>
           </div>
 
           {/* Headline */}
-          <h1 className="font-display text-7xl md:text-9xl font-light tracking-tight mb-8 leading-[0.92]">
+          <h1 className="font-display text-7xl md:text-9xl font-semibold tracking-[-0.01em] mb-8 leading-[0.9]">
             The{' '}
             <span className="bg-gradient-to-r from-[#7B61FF] via-[#9B7FFF] to-[#3ECFCF] bg-clip-text text-transparent">
               4-Year Wait.
             </span>
             <br />
-            <span className="text-[#F0F2F8]/90">Ends Now.</span>
+            <span className="text-[#F0F2F8]">Ends Now.</span>
           </h1>
 
           {/* Sub-copy */}
@@ -425,9 +425,9 @@ export const Present = () => {
           {/* Section header — centered */}
           <FadeIn className="text-center mb-20">
             <SectionLabel>The Problem</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto">
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto">
               Millions living with{' '}
-              <span style={{ background: 'linear-gradient(90deg,#7B61FF,#9B80FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span className="bg-gradient-to-r from-[#7B61FF] to-[#9B80FF] bg-clip-text text-transparent">
                 undiagnosed
               </span>{' '}
               autoimmune disease.
@@ -455,7 +455,7 @@ export const Present = () => {
                 ].map((item) => (
                   <div
                     key={item.text}
-                    className="flex items-center gap-4 px-5 py-4 rounded-xl border border-white/5 bg-white/[0.03] backdrop-blur-sm"
+                    className="flex items-center gap-4 px-5 py-4 rounded-xl border border-white/[0.07] bg-[#13161F]/70 backdrop-blur-md"
                   >
                     <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ background: item.color }} />
                     <span className="text-[#F0F2F8]/85 text-sm leading-snug">{item.text}</span>
@@ -475,8 +475,8 @@ export const Present = () => {
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="flex flex-col items-center justify-center py-6 px-4 rounded-2xl border bg-white/[0.035] backdrop-blur-xl"
-                    style={{ borderColor: `${s.color}20` }}
+                    className="flex flex-col items-center justify-center py-6 px-4 rounded-2xl border backdrop-blur-md"
+                    style={{ borderColor: `${s.color}35`, background: `${s.color}0D` }}
                   >
                     <StatCounter value={s.value} suffix={s.suffix} prefix={s.prefix} label={s.label} color={s.color} duration={s.duration} />
                   </div>
@@ -484,7 +484,7 @@ export const Present = () => {
               </div>
 
               {/* Pull-quote */}
-              <div className="p-5 rounded-2xl border border-[#7B61FF]/15 bg-white/[0.03] backdrop-blur-xl relative overflow-hidden">
+              <div className="p-5 rounded-2xl border border-[#7B61FF]/20 bg-[#7B61FF]/[0.06] backdrop-blur-md relative overflow-hidden">
                 <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-gradient-to-b from-[#7B61FF] to-[#3ECFCF]" />
                 <p className="text-[#8A93B2] text-sm leading-relaxed italic pl-2">
                   "Autoimmune diseases are notoriously hard to diagnose. Patients spend years being
@@ -506,9 +506,9 @@ export const Present = () => {
           {/* Header */}
           <FadeIn className="text-center mb-20">
             <SectionLabel>The Dataset</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto">
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto">
               Built on{' '}
-              <span style={{ background: 'linear-gradient(90deg,#3ECFCF,#52D0A0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span className="bg-gradient-to-r from-[#3ECFCF] to-[#52D0A0] bg-clip-text text-transparent">
                 real patient data
               </span>{' '}
               from 3 sources.
@@ -532,8 +532,8 @@ export const Present = () => {
                 ].map((s) => (
                   <div
                     key={s.name}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white/[0.04]"
-                    style={{ borderColor: `${s.color}30` }}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md"
+                    style={{ borderColor: `${s.color}35`, background: `${s.color}0D` }}
                   >
                     <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
                     <span className="text-xs text-[#F0F2F8]/80">{s.name}</span>
@@ -545,7 +545,7 @@ export const Present = () => {
 
             <FadeIn delay={0.1}>
               {/* Class breakdown — Apple-style table rows */}
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+              <div className="rounded-2xl border border-white/[0.08] bg-[#13161F]/80 backdrop-blur-md overflow-hidden">
                 <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
                   <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase">Class</span>
                   <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase">Patients</span>
@@ -598,9 +598,9 @@ export const Present = () => {
 
           <FadeIn className="text-center mb-8">
             <SectionLabel>The Solution</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto mb-4">
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
               A hierarchical XGBoost pipeline that{' '}
-              <span style={{ background: 'linear-gradient(90deg,#7B61FF,#9B80FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span className="bg-gradient-to-r from-[#7B61FF] to-[#3ECFCF] bg-clip-text text-transparent">
                 sees what doctors miss.
               </span>
             </h2>
@@ -629,14 +629,14 @@ export const Present = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex flex-col items-center py-7 px-4 rounded-2xl border bg-white/[0.035] backdrop-blur-xl relative overflow-hidden"
-                  style={{ borderColor: `${m.color}22` }}
+                  className="flex flex-col items-center py-7 px-4 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                  style={{ borderColor: `${m.color}35`, background: `${m.color}0D` }}
                 >
                   <div
                     className="absolute top-0 left-4 right-4 h-[2px] rounded-full"
                     style={{ background: m.color }}
                   />
-                  <span className="font-display text-4xl font-light mb-1.5" style={{ color: m.color }}>{m.val}</span>
+                  <span className="font-display text-4xl font-semibold tracking-[0.04em] mb-1.5" style={{ color: m.color }}>{m.val}</span>
                   <span className="text-[10px] font-mono tracking-widest text-[#8A93B2] uppercase text-center">{m.label}</span>
                 </motion.div>
               ))}
@@ -677,9 +677,9 @@ export const Present = () => {
 
           <FadeIn className="text-center mb-14">
             <SectionLabel>Early Detection</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto mb-6">
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-6">
               Confident at{' '}
-              <span style={{ background: 'linear-gradient(90deg,#52D0A0,#3ECFCF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span className="bg-gradient-to-r from-[#52D0A0] to-[#3ECFCF] bg-clip-text text-transparent">
                 Visit 1.
               </span>
               <br />Before symptoms escalate.
@@ -701,14 +701,14 @@ export const Present = () => {
               ].map((c) => (
                 <div
                   key={c.name}
-                  className="flex flex-col items-center py-8 px-6 rounded-2xl border bg-white/[0.035] backdrop-blur-xl text-center"
-                  style={{ borderColor: `${c.dot}25` }}
+                  className="flex flex-col items-center py-8 px-6 rounded-2xl border backdrop-blur-md text-center"
+                  style={{ borderColor: `${c.dot}35`, background: `${c.dot}0D` }}
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-2 h-2 rounded-full" style={{ background: c.dot }} />
                     <span className="text-xs font-mono tracking-widest uppercase" style={{ color: c.dot }}>{c.name}</span>
                   </div>
-                  <span className="font-display text-5xl font-light mb-1" style={{ color: c.dot }}>{c.pct}</span>
+                  <span className="font-display text-5xl font-semibold tracking-[0.04em] mb-1" style={{ color: c.dot }}>{c.pct}</span>
                   <span className="text-[#8A93B2] text-xs leading-relaxed max-w-[180px]">{c.sub}</span>
                 </div>
               ))}
@@ -732,8 +732,8 @@ export const Present = () => {
 
           <FadeIn className="text-center mb-20">
             <SectionLabel>The Impact</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-2xl mx-auto mb-4">
-              <span style={{ background: 'linear-gradient(90deg,#F4A261,#FFD580)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-2xl mx-auto mb-4">
+              <span className="bg-gradient-to-r from-[#F4A261] to-[#FFD580] bg-clip-text text-transparent">
                 $2,059
               </span>{' '}
               saved per patient.
@@ -749,14 +749,14 @@ export const Present = () => {
             {/* Left col — financial breakdown table (3 cols wide) */}
             <FadeIn delay={0.08} className="md:col-span-3 flex flex-col">
               {/* Headline stat */}
-              <div className="flex justify-around py-8 rounded-2xl border border-[#F4A261]/15 bg-white/[0.03] backdrop-blur-xl mb-4">
+              <div className="flex justify-around py-8 rounded-2xl border border-[#F4A261]/20 bg-[#F4A261]/[0.05] backdrop-blur-md mb-4">
                 <StatCounter value={2059} prefix="$" label="Saved per healthy patient" color="#F4A261" duration={2000} />
                 <div className="w-px bg-white/5" />
                 <StatCounter value={707} prefix="$" label="Saved per systemic patient" color="#7B61FF" duration={1600} />
               </div>
 
               {/* National scale table */}
-              <div className="flex-1 rounded-2xl border border-[#3ECFCF]/15 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+              <div className="flex-1 rounded-2xl border border-[#3ECFCF]/20 bg-[#3ECFCF]/[0.05] backdrop-blur-md overflow-hidden">
                 <div className="px-6 py-3 border-b border-white/5">
                   <span className="text-[10px] font-mono tracking-widest text-[#3ECFCF] uppercase">At National Scale</span>
                 </div>
@@ -779,7 +779,7 @@ export const Present = () => {
 
             {/* Right col — beyond cost list (2 cols wide) */}
             <FadeIn delay={0.16} className="md:col-span-2 flex flex-col">
-              <div className="flex-1 rounded-2xl border border-[#7B61FF]/15 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+              <div className="flex-1 rounded-2xl border border-[#7B61FF]/20 bg-[#7B61FF]/[0.05] backdrop-blur-md overflow-hidden">
                 <div className="px-6 py-3 border-b border-white/5">
                   <span className="text-[10px] font-mono tracking-widest text-[#7B61FF] uppercase">Beyond Cost</span>
                 </div>
@@ -815,9 +815,9 @@ export const Present = () => {
 
           <FadeIn className="text-center mb-20">
             <SectionLabel>Data Exploration</SectionLabel>
-            <h2 className="font-display text-5xl md:text-6xl font-light leading-tight max-w-3xl mx-auto mb-4">
+            <h2 className="font-display text-5xl md:text-6xl font-semibold tracking-[0.02em] leading-tight max-w-3xl mx-auto mb-4">
               Understanding the data{' '}
-              <span style={{ background: 'linear-gradient(90deg,#3ECFCF,#7B61FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span className="bg-gradient-to-r from-[#3ECFCF] to-[#7B61FF] bg-clip-text text-transparent">
                 before the model.
               </span>
             </h2>
@@ -882,7 +882,8 @@ export const Present = () => {
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="p-5 rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur-xl relative overflow-hidden"
+                  className="p-5 rounded-2xl border backdrop-blur-md relative overflow-hidden"
+                  style={{ borderColor: `${item.color}25`, background: `${item.color}08` }}
                 >
                   <div className="absolute top-0 left-5 right-5 h-[2px] rounded-full" style={{ background: item.color }} />
                   <span className="font-mono text-[10px] text-[#8A93B2]/40 tracking-widest absolute top-4 right-4">{item.index}</span>
@@ -905,13 +906,13 @@ export const Present = () => {
 
         <FadeIn className="relative z-10 max-w-3xl w-full">
           {/* Tag */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#7B61FF]/25 bg-[#7B61FF]/[0.08] backdrop-blur-md mb-10">
             <div className="w-1.5 h-1.5 rounded-full bg-[#7B61FF] animate-pulse" />
             <span className="text-xs font-mono tracking-widest text-[#8A93B2] uppercase">Aura · Golden Byte 2026</span>
           </div>
 
           {/* Headline */}
-          <h2 className="font-display text-6xl md:text-8xl font-light mb-6 leading-[0.92] tracking-tight">
+          <h2 className="font-display text-6xl md:text-8xl font-semibold mb-6 leading-[0.88] tracking-[-0.01em]">
             Routine labs.{' '}
             <span className="bg-gradient-to-r from-[#7B61FF] via-[#9B7FFF] to-[#3ECFCF] bg-clip-text text-transparent">
               Extraordinary insight.
@@ -934,7 +935,7 @@ export const Present = () => {
             </a>
             <a
               href="/clinician"
-              className="px-9 py-4 rounded-xl font-medium text-sm tracking-wide border border-[#3ECFCF]/30 text-[#3ECFCF] hover:bg-[#3ECFCF]/8 transition-all hover:scale-105 active:scale-[0.98] backdrop-blur-xl"
+              className="px-9 py-4 rounded-xl font-medium text-sm tracking-wide border border-[#3ECFCF]/30 text-[#3ECFCF] hover:bg-[#3ECFCF]/8 transition-all hover:scale-105 active:scale-[0.98] backdrop-blur-md"
             >
               Clinician Portal
             </a>
@@ -949,10 +950,10 @@ export const Present = () => {
             ].map((s) => (
               <div
                 key={s.label}
-                className="flex flex-col items-center py-5 px-3 rounded-2xl border bg-white/[0.04] backdrop-blur-xl"
-                style={{ borderColor: `${s.color}20` }}
+                className="flex flex-col items-center py-5 px-3 rounded-2xl border backdrop-blur-md"
+                style={{ borderColor: `${s.color}35`, background: `${s.color}0D` }}
               >
-                <span className="font-display text-2xl font-light" style={{ color: s.color }}>{s.val}</span>
+                <span className="font-display text-2xl font-semibold tracking-[0.04em]" style={{ color: s.color }}>{s.val}</span>
                 <span className="text-[9px] font-mono tracking-widest text-[#8A93B2] uppercase mt-1.5 text-center">{s.label}</span>
               </div>
             ))}
